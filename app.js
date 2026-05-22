@@ -369,12 +369,12 @@
             <div class="set-row${set.done ? " done" : ""}" data-set="${sIdx}">
               <div class="set-num">${sIdx + 1}</div>
               <div class="set-input-wrap">
-                <input class="set-input" type="number" inputmode="decimal" step="0.5"
+                <input class="set-input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next"
                        value="${set.weight}" data-field="weight" data-ex="${exIdx}" data-set="${sIdx}" placeholder="–"/>
                 <span class="set-input-unit">kg</span>
               </div>
               <div class="set-input-wrap">
-                <input class="set-input" type="number" inputmode="numeric" step="1"
+                <input class="set-input" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done"
                        value="${set.reps}" data-field="reps" data-ex="${exIdx}" data-set="${sIdx}" placeholder="${ex.repsLow}–${ex.repsHigh}"/>
                 <span class="set-input-unit">Wdh.</span>
               </div>
@@ -408,7 +408,11 @@
           const exIdxI = parseInt(e.target.dataset.ex);
           const sIdxI = parseInt(e.target.dataset.set);
           const field = e.target.dataset.field;
-          const val = e.target.value === "" ? "" : parseFloat(e.target.value);
+          // Akzeptiere DE-Komma und EN-Punkt gleichwertig; ignoriere alles
+          // andere — sonst kann ein versehentliches "22,5" als Datenverlust
+          // im abgehakten Satz landen (Tonnage = 0).
+          const raw = e.target.value.trim().replace(",", ".");
+          const val = raw === "" ? "" : parseFloat(raw);
           state.workout.exercises[exIdxI].sets[sIdxI][field] = val;
         };
         input.addEventListener("change", persist);

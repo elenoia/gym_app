@@ -17,8 +17,8 @@ const PLAN = {
     title: "Aufbau",
     subtitle: "Beine, Brust, Rücken",
     exercises: [
-      { id: "beinpresse",       sets: 3, repsLow: 10, repsHigh: 12, rest: 150 },
-      { id: "bankdruecken",     sets: 3, repsLow: 8,  repsHigh: 10, rest: 120 },
+      { id: "beinpresse",       sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
+      { id: "bankdruecken",     sets: 3, repsLow: 8,  repsHigh: 10, rest: 90 },
       { id: "kabelrudern",      sets: 3, repsLow: 10, repsHigh: 12, rest: 90  },
       { id: "rueckenstrecker",  sets: 3, repsLow: 10, repsHigh: 12, rest: 90  },
       { id: "face_pulls",       sets: 3, repsLow: 12, repsHigh: 15, rest: 60  },
@@ -29,10 +29,10 @@ const PLAN = {
     title: "Aufrichtung",
     subtitle: "Gesäß, Schulter, Arme",
     exercises: [
-      { id: "hip_thrust",       sets: 3, repsLow: 8,  repsHigh: 10, rest: 120 },
+      { id: "hip_thrust",       sets: 3, repsLow: 8,  repsHigh: 10, rest: 90 },
       { id: "beinstrecker",     sets: 3, repsLow: 10, repsHigh: 12, rest: 90  },
       { id: "latzug_breit",     sets: 3, repsLow: 10, repsHigh: 12, rest: 90  },
-      { id: "schulterdruecken", sets: 3, repsLow: 8,  repsHigh: 10, rest: 120 },
+      { id: "schulterdruecken", sets: 3, repsLow: 8,  repsHigh: 10, rest: 90 },
       { id: "butterfly",        sets: 3, repsLow: 10, repsHigh: 12, rest: 90  },
       { id: "bizeps_curls",     sets: 2, repsLow: 10, repsHigh: 12, rest: 60  },
       { id: "trizeps_kabel",    sets: 2, repsLow: 10, repsHigh: 12, rest: 60  }
@@ -43,8 +43,8 @@ const PLAN = {
     subtitle: "Backup-Tag",
     exercises: [
       { id: "beinbeuger",       sets: 3, repsLow: 10, repsHigh: 12, rest: 90  },
-      { id: "hip_thrust",       sets: 3, repsLow: 8,  repsHigh: 10, rest: 120 },
-      { id: "rudern_maschine",  sets: 3, repsLow: 8,  repsHigh: 10, rest: 120 },
+      { id: "hip_thrust",       sets: 3, repsLow: 8,  repsHigh: 10, rest: 90 },
+      { id: "rudern_maschine",  sets: 3, repsLow: 8,  repsHigh: 10, rest: 90 },
       { id: "rueckenstrecker",  sets: 3, repsLow: 10, repsHigh: 12, rest: 90  },
       { id: "face_pulls",       sets: 3, repsLow: 12, repsHigh: 15, rest: 60  },
       { id: "liegestuetze",     sets: 3, repsLow: 6,  repsHigh: 12, rest: 90  }

@@ -82,9 +82,8 @@ function assert(cond, msg) {
   assert(/warmup-done-check/.test(completeLabel), `complete shows check: ${completeLabel}`);
   await shot(page, "03-warmup-complete");
 
-  // 4) Timer rest values per exercise in Tag B
-  // expected: hip_thrust=120, beinstrecker=90, latzug_breit=90, schulterdruecken=120, butterfly=90, bizeps_curls=60, trizeps_kabel=60
-  const expectedB = [120, 90, 90, 120, 90, 60, 60];
+  // 4) Timer rest values per exercise in Tag B — current plan: 5× 90s, dann 2× 60s
+  const expectedB = [90, 90, 90, 90, 90, 60, 60];
   const results = [];
   for (let i = 0; i < 7; i++) {
     await page.evaluate((idx) => {

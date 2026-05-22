@@ -3,7 +3,7 @@
 //   - HTML/JS/CSS: network-first mit Cache-Fallback (Updates kommen direkt an).
 //   - Bilder/Icons: cache-first (selten Änderungen).
 // Beim Versions-Bump unten wird der alte Shell-Cache entsorgt.
-const VERSION = "v3";
+const VERSION = "v4";
 const SHELL_CACHE = `gym-shell-${VERSION}`;
 const STATIC_CACHE = `gym-static-${VERSION}`;
 
