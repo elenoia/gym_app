@@ -53,6 +53,8 @@ function assert(cond, msg) {
   // 2) Open Tag B → check structure, butterfly position
   await cards.nth(1).click();
   await page.waitForSelector("#view-workout.active");
+  await page.waitForSelector(".exercise");
+  await page.locator(".exercise .exercise-head").first().click();
   await page.waitForSelector(".exercise.open");
   const exNames = await page.locator(".exercise .exercise-name").allTextContents();
   // Expected order: Hip Thrust, Beinstrecker, Latzug (breit), Schulterdrücken, Butterfly, Bizeps, Trizeps
@@ -63,8 +65,7 @@ function assert(cond, msg) {
   assert(/Schulterdr/i.test(exNames[3]), `Schulterdrücken pos 4: ${exNames[3]}`);
   assert(/Beinstrecker/i.test(exNames[1]), `Beinstrecker in B: ${exNames[1]}`);
 
-  // 3) Warm-up checklist
-  await page.click("#warmup-toggle");
+  // 3) Warm-up checklist — Banner ist seit v5 default offen
   await page.waitForSelector("#warmup-banner.open");
   const initialLabel = (await page.locator("#warmup-label").textContent()).trim();
   assert(/Warm-up · 0\/5/.test(initialLabel), `initial label '${initialLabel}'`);
@@ -172,6 +173,8 @@ function assert(cond, msg) {
   // 9) Repeat workout with HIGHER weight on hip_thrust to confirm PR baseline picks it up
   // — and lower weight on bankdruecken to confirm no PR
   await cards.nth(1).click();
+  await page.waitForSelector(".exercise");
+  await page.locator(".exercise .exercise-head").first().click();
   await page.waitForSelector(".exercise.open");
   // Set 1 in hip thrust = same weight (no PR — needs to be strictly higher)
   await page.evaluate(() => {

@@ -454,10 +454,11 @@
       list.appendChild(card);
     });
 
-    // erste Übung default aufgeklappt
-    if (state.workout.exercises.length > 0 && !state.workout.exercises.some(e => e.expanded)) {
-      state.workout.exercises[0].expanded = true;
-      list.firstChild.classList.add("open");
+    // Default-Zustand am Anfang einer Session: Warmup steht im Fokus,
+    // keine Übung wird automatisch aufgeklappt. Nutzerin tippt selbst auf
+    // die Übung, mit der sie nach dem Warmup beginnt.
+    if (!state.workout.exercises.some(e => e.expanded)) {
+      $("#warmup-banner").classList.add("open");
     }
     // Initialer PR-Badge-Pass (für den seltenen Fall, dass Sätze schon abgehakt sind)
     state.workout.exercises.forEach((ex, exIdx) => updatePRBadges(ex, exIdx));
@@ -531,6 +532,20 @@
     $("#timer-display").textContent =
       `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   }
+
+  // iOS friert JS ein, wenn die App im Hintergrund ist — setInterval pausiert,
+  // Audio/Vibration feuern nicht. Bei Rückkehr holen wir das nach: ist die
+  // Pause abgelaufen, sofort beep + vibrate, sonst Anzeige sync'n.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    if (!state.timer || state.timer.finished) return;
+    if (state.timer.endAt - Date.now() <= 0) {
+      state.timer.finished = true;
+      finishTimer();
+    } else {
+      updateTimerDisplay();
+    }
+  });
 
   function showTimerOverlay() { $("#timer-overlay").classList.remove("hidden"); }
   function hideTimerOverlay() { $("#timer-overlay").classList.add("hidden"); }

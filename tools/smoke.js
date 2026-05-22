@@ -40,6 +40,9 @@ const waitVisible = (page, selector) =>
   // Tag A
   await page.click("#day-grid .day-card:nth-child(1)");
   await page.waitForSelector("#view-workout.active");
+  await page.waitForSelector(".exercise"); // exercise list rendered
+  // Workouts starten jetzt mit aufgeklapptem Warmup, alle Übungen zu — selbst öffnen
+  await page.locator(".exercise .exercise-head").first().click();
   await page.waitForSelector(".exercise.open");
   await shot(page, "03-workout-initial");
 
@@ -77,8 +80,7 @@ const waitVisible = (page, selector) =>
 
   await page.click("#timer-skip").catch(() => {});
 
-  // Warm-up expand
-  await page.click("#warmup-toggle");
+  // Warm-up Banner ist seit v5 default offen; bestätigen + Screenshot
   await page.waitForSelector("#warmup-banner.open");
   await shot(page, "07-warmup");
 
