@@ -68,36 +68,36 @@ const PLAN = {
   }
 };
 
-// Verspielte Strichfiguren-Mascots für die Plan-Badges (Redesign „Atelier").
-// In currentColor gezeichnet → erben die Akzentfarbe vom Container.
+// Plan-Badge-Icons im flachen Linienstil (Tabler-Glyphen, MIT, nachgezeichnet
+// als Inline-SVG). In currentColor → erben die Akzentfarbe vom Container.
+// Positionsbezogen (mascotFor): A=Aufbau, B=Aufrichtung, C=Variation, D=Maschinen.
 const MASCOTS = {
-  // A — Doppel-Bizeps-Pose
-  A: `<svg viewBox="0 0 40 40"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="20" cy="9" r="4" fill="currentColor" stroke="none"/>
-    <line x1="20" y1="13" x2="20" y2="26"/>
-    <path d="M20 17 L13 16 L11 11"/><path d="M20 17 L27 16 L29 11"/>
-    <line x1="20" y1="26" x2="14" y2="34"/><line x1="20" y1="26" x2="26" y2="34"/>
+  // A — Hantel / Langhantel (ti-barbell)
+  A: `<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2 12h1"/>
+    <path d="M6 8h-2a1 1 0 0 0 -1 1v6a1 1 0 0 0 1 1h2"/>
+    <path d="M6 7v10a1 1 0 0 0 1 1h1a1 1 0 0 0 1 -1v-10a1 1 0 0 0 -1 -1h-1a1 1 0 0 0 -1 1"/>
+    <path d="M9 12h6"/>
+    <path d="M15 7v10a1 1 0 0 0 1 1h1a1 1 0 0 0 1 -1v-10a1 1 0 0 0 -1 -1h-1a1 1 0 0 0 -1 1"/>
+    <path d="M18 8h2a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-2"/>
+    <path d="M22 12h-1"/>
   </g></svg>`,
-  // B — Kniebeuge unter der Hantel
-  B: `<svg viewBox="0 0 40 40"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="9" y1="9" x2="31" y2="9"/><circle cx="9" cy="9" r="2.2" fill="currentColor" stroke="none"/><circle cx="31" cy="9" r="2.2" fill="currentColor" stroke="none"/>
-    <circle cx="20" cy="15" r="3.4" fill="currentColor" stroke="none"/>
-    <line x1="20" y1="18" x2="20" y2="25"/>
-    <line x1="14" y1="11" x2="20" y2="20"/><line x1="26" y1="11" x2="20" y2="20"/>
-    <path d="M20 25 L14 28 L17 34"/><path d="M20 25 L26 28 L23 34"/>
+  // B — Dehnen / Mobility (ti-stretching)
+  B: `<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/>
+    <path d="M5 20l5 -.5l1 -2"/>
+    <path d="M18 20v-5h-5.5l2.5 -6.5l-5.5 1l1.5 2"/>
   </g></svg>`,
-  // C — Hampelmann
-  C: `<svg viewBox="0 0 40 40"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="20" cy="10" r="4" fill="currentColor" stroke="none"/>
-    <line x1="20" y1="14" x2="20" y2="24"/>
-    <line x1="20" y1="17" x2="10" y2="11"/><line x1="20" y1="17" x2="30" y2="11"/>
-    <line x1="20" y1="24" x2="12" y2="33"/><line x1="20" y1="24" x2="28" y2="33"/>
+  // C — Wechsel / Mischen (ti-arrows-shuffle)
+  C: `<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 4l3 3l-3 3"/>
+    <path d="M18 20l3 -3l-3 -3"/>
+    <path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5"/>
+    <path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3"/>
   </g></svg>`,
-  // D — Streck-/Siegerpose
-  D: `<svg viewBox="0 0 40 40"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="20" cy="10" r="4" fill="currentColor" stroke="none"/>
-    <line x1="20" y1="14" x2="20" y2="27"/>
-    <path d="M20 18 L14 13 L15 8"/><path d="M20 18 L26 16 L31 18"/>
-    <line x1="20" y1="27" x2="14" y2="34"/><line x1="20" y1="27" x2="26" y2="34"/>
+  // D — Zahnrad / Gerät (ti-settings-2)
+  D: `<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19.875 6.27a2.225 2.225 0 0 1 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033"/>
+    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/>
   </g></svg>`
 };
