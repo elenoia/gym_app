@@ -183,12 +183,12 @@
     // Körpergewicht: keine kg-Tonnage (nur Wdh. werden geloggt).
     if (exMeta && exMeta.equipment === "Körpergewicht") return 0;
     // Getrennt geloggte Seiten (links/rechts): nur wenn der Satz explizit als
-    // Split markiert ist ODER tatsächlich gültige L/R-Werte enthält. Wichtig:
-    // NICHT auf `!= null` prüfen — laufende Sätze tragen leere Strings ("") als
-    // Platzhalter, die sonst fälschlich als Split-Eingabe gelten würden.
-    const hasSideValues = [set.weightL, set.repsL, set.weightR, set.repsR]
-      .some(v => Number.isFinite(num(v)));
-    if (set.split === true || hasSideValues) {
+    // Split markiert ist ODER ein echtes L/R-GEWICHT trägt. Bewusst NUR am
+    // Gewicht festgemacht (nicht an Wdh.): laufende Sätze haben leere
+    // Gewichts-Platzhalter (""), aber vorbelegte Wdh. — eine Wdh.-basierte
+    // Prüfung würde gemeinsame Sätze fälschlich als Split behandeln (→ 0).
+    const hasSideWeight = Number.isFinite(num(set.weightL)) || Number.isFinite(num(set.weightR));
+    if (set.split === true || hasSideWeight) {
       return sideVolume(set.weightL, set.repsL) + sideVolume(set.weightR, set.repsR);
     }
     // Gemeinsamer Wert; einseitig → pro Seite, also verdoppelt.
@@ -276,6 +276,10 @@
     const meta = EXERCISES[exId] || {};
     const lastEx = last ? last.exercises.find(e => e.id === exId) : null;
     const defaultWeight = lastWeights[exId] ?? "";
+    // Wdh. werden mit der geplanten Mindestzahl vorbelegt (z. B. 10 bei „10–12"),
+    // als echter, editierbarer Wert — sonst bliebe das Feld leer und der Satz
+    // würde mit 0 in die Summe eingehen. Letztes Mal hat Vorrang, falls erfasst.
+    const defaultReps = spec.repsLow ?? 10;
     const setCount = spec.sets || 3;
     return {
       id: exId,
@@ -286,11 +290,11 @@
         const ls = lastEx?.sets?.[i] || {};
         return {
           weight:  ls.weight  ?? defaultWeight,
-          reps:    ls.reps    ?? "",
+          reps:    ls.reps    ?? defaultReps,
           weightL: ls.weightL ?? "",
-          repsL:   ls.repsL   ?? "",
+          repsL:   ls.repsL   ?? defaultReps,
           weightR: ls.weightR ?? "",
-          repsR:   ls.repsR   ?? "",
+          repsR:   ls.repsR   ?? defaultReps,
           done: false,
           // „Zuletzt"-Hinweise pro Satz (können null sein)
           lastWeight:  ls.weight  ?? null,
