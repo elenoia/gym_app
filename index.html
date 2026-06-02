@@ -67,7 +67,7 @@
           <h2 id="workout-title">Tag A</h2>
           <p class="workout-progress" id="workout-progress">0 / 0</p>
         </div>
-        <div class="spacer"></div>
+        <div class="workout-tonnage" id="workout-tonnage" aria-live="polite"></div>
       </header>
 
       <div class="warmup-banner" id="warmup-banner">
@@ -157,6 +157,17 @@
         <div class="sheet-actions">
           <button class="text-btn" id="sheet-cancel">Abbrechen</button>
           <button class="text-btn primary" id="sheet-confirm">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auswahl-Sheet (z. B. Alternativübungen) -->
+    <div id="picker" class="sheet hidden" role="dialog" aria-modal="true">
+      <div class="sheet-card">
+        <h3 id="picker-title"></h3>
+        <div id="picker-list" class="picker-list"></div>
+        <div class="sheet-actions">
+          <button class="text-btn" id="picker-cancel">Abbrechen</button>
         </div>
       </div>
     </div>

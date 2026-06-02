@@ -49,5 +49,21 @@ const PLAN = {
       { id: "face_pulls",       sets: 3, repsLow: 12, repsHigh: 15, rest: 60  },
       { id: "liegestuetze",     sets: 3, repsLow: 6,  repsHigh: 12, rest: 90  }
     ]
+  },
+  // Punkt 5: zweiter, paralleler Plan nur mit Maschinen-Übungen — für Tage
+  // ohne Lust auf freie Gewichte. Elenas Variante (Ganzkörper), alle Übungen
+  // haben equipment === "Maschine".
+  M: {
+    title: "Maschinen",
+    subtitle: "Nur Geräte",
+    exercises: [
+      { id: "beinpresse",      sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
+      { id: "abduktoren",      sets: 3, repsLow: 12, repsHigh: 15, rest: 60 },
+      { id: "brustpresse",     sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
+      { id: "rudern_maschine", sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
+      { id: "schulterpresse",  sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
+      { id: "reverse_fly",     sets: 3, repsLow: 12, repsHigh: 15, rest: 60 },
+      { id: "bauchmaschine",   sets: 3, repsLow: 12, repsHigh: 15, rest: 60 }
+    ]
   }
 };

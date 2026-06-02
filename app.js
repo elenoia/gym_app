@@ -103,6 +103,28 @@
   function saveHistory(h)     { saveJSON("history", h); }
   function loadLastWeights()  { return loadJSON("lastWeights", {}); }
   function saveLastWeights(w) { saveJSON("lastWeights", w); }
+  // Editierbare Notizen pro Übung (global, nicht pro Session): { exId: "text" }
+  function loadUserNotes()    { return loadJSON("userNotes", {}); }
+  function saveUserNotes(n)   { saveJSON("userNotes", n); }
+  // Effektive Notiz = gespeicherte Notiz, sonst vorbelegter Default.
+  function getUserNote(exId) {
+    const stored = loadUserNotes()[exId];
+    if (stored != null) return stored;
+    return EXERCISES[exId]?.noteDefault ?? "";
+  }
+  function setUserNote(exId, text) {
+    const notes = loadUserNotes();
+    notes[exId] = text;
+    saveUserNotes(notes);
+  }
+
+  // Minimal-Escape für Text, der in HTML/Textarea landet.
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
 
   function getLastSessionForDay(day) {
     const history = loadHistory();
@@ -130,18 +152,63 @@
     window.scrollTo({ top: 0, behavior: "instant" });
   }
 
-  // ─── Tonnage / PR-Helfer ─────────────────────────────
+  // ─── Tonnage / Volumen / PR-Helfer ───────────────────
+  // FORMEL (Gesamtgewicht / „bewegt"):
+  //
+  //     Volumen = Σ über alle ABGEHAKTEN Sätze von  Gewicht × Wiederholungen
+  //
+  // Sonderregeln (Punkt 3 des Umbaus):
+  //   • Einseitige Übungen zählen PRO SEITE:
+  //       – Gemeinsamer Wert (z. B. 4,5 kg × 12) = Last pro Seite, beidseitig
+  //         ausgeführt → 4,5 × 12 × 2.
+  //       – Getrennt geloggt (links/rechts) → linke + rechte Seite einzeln summiert.
+  //   • Körpergewichts-Übungen (Liegestütze, Hyperextension …) tragen 0 kg zur
+  //     kg-Summe bei — die Wiederholungen werden trotzdem gespeichert.
+  //   • Sätze ohne gültiges Gewicht ODER ohne gültige Wdh. zählen 0.
+  //   • Nicht abgehakte Sätze zählen 0.
+  //
+  // Maßgeblich ist, was im Satz GESPEICHERT wurde: ein Satz kann seine eigene
+  // `unilateral`-Markierung mitführen (vom Logging gesetzt); fehlt sie, gelten
+  // die Übungs-Metadaten als Fallback.
+  function num(v) {
+    if (v === "" || v == null) return NaN;
+    return parseFloat(v);
+  }
+  function sideVolume(weight, reps) {
+    const w = num(weight), r = num(reps);
+    return (Number.isFinite(w) && Number.isFinite(r)) ? w * r : 0;
+  }
+  function setVolume(set, exMeta) {
+    if (!set || !set.done) return 0;
+    // Körpergewicht: keine kg-Tonnage (nur Wdh. werden geloggt).
+    if (exMeta && exMeta.equipment === "Körpergewicht") return 0;
+    // Getrennt geloggte Seiten (links/rechts): nur wenn der Satz explizit als
+    // Split markiert ist ODER tatsächlich gültige L/R-Werte enthält. Wichtig:
+    // NICHT auf `!= null` prüfen — laufende Sätze tragen leere Strings ("") als
+    // Platzhalter, die sonst fälschlich als Split-Eingabe gelten würden.
+    const hasSideValues = [set.weightL, set.repsL, set.weightR, set.repsR]
+      .some(v => Number.isFinite(num(v)));
+    if (set.split === true || hasSideValues) {
+      return sideVolume(set.weightL, set.repsL) + sideVolume(set.weightR, set.repsR);
+    }
+    // Gemeinsamer Wert; einseitig → pro Seite, also verdoppelt.
+    const base = sideVolume(set.weight, set.reps);
+    const unilateral = set.unilateral ?? (exMeta ? exMeta.unilateral : false);
+    return unilateral ? base * 2 : base;
+  }
   function sessionTonnage(session) {
     let t = 0;
     for (const ex of session.exercises) {
-      for (const s of ex.sets) {
-        if (!s.done) continue;
-        const w = parseFloat(s.weight);
-        const r = parseFloat(s.reps);
-        if (Number.isFinite(w) && Number.isFinite(r)) t += w * r;
-      }
+      const exMeta = EXERCISES[ex.id];
+      for (const s of ex.sets) t += setVolume(s, exMeta);
     }
     return t;
+  }
+  // Repräsentatives „schwerstes" Gewicht eines Satzes — für PR-Badges, Vorgaben
+  // und Mini-Verlauf. Berücksichtigt gemeinsame und getrennte (L/R) Werte.
+  function setTopWeight(set) {
+    const vals = [set.weight, set.weightL, set.weightR].map(num).filter(Number.isFinite);
+    return vals.length ? Math.max(...vals) : NaN;
   }
   function totalTonnage() {
     return loadHistory().reduce((sum, s) => sum + sessionTonnage(s), 0);
@@ -157,7 +224,7 @@
       for (const ex of session.exercises) {
         for (const s of ex.sets) {
           if (!s.done) continue;
-          const w = parseFloat(s.weight);
+          const w = setTopWeight(s);
           if (!Number.isFinite(w)) continue;
           if (map[ex.id] == null || w > map[ex.id]) map[ex.id] = w;
         }
@@ -202,6 +269,47 @@
     `;
   }
 
+  // Baut einen Übungs-Eintrag fürs laufende Workout. `spec` liefert sets/reps/rest
+  // (aus dem Plan oder beim Tauschen aus der Original-Übung). Trägt den letzten
+  // Stand pro Satz als Vorbelegung + „Zuletzt"-Hinweis mit — auch seitengetrennt.
+  function buildWorkoutExercise(exId, spec, last, lastWeights) {
+    const meta = EXERCISES[exId] || {};
+    const lastEx = last ? last.exercises.find(e => e.id === exId) : null;
+    const defaultWeight = lastWeights[exId] ?? "";
+    const setCount = spec.sets || 3;
+    return {
+      id: exId,
+      unilateral: !!meta.unilateral,
+      // Beim einseitigen Loggen Seiten getrennt — Vorgabe folgt dem letzten Mal.
+      split: meta.unilateral ? !!(lastEx?.sets?.some(s => s && s.split)) : false,
+      sets: Array.from({ length: setCount }, (_, i) => {
+        const ls = lastEx?.sets?.[i] || {};
+        return {
+          weight:  ls.weight  ?? defaultWeight,
+          reps:    ls.reps    ?? "",
+          weightL: ls.weightL ?? "",
+          repsL:   ls.repsL   ?? "",
+          weightR: ls.weightR ?? "",
+          repsR:   ls.repsR   ?? "",
+          done: false,
+          // „Zuletzt"-Hinweise pro Satz (können null sein)
+          lastWeight:  ls.weight  ?? null,
+          lastReps:    ls.reps    ?? null,
+          lastWeightL: ls.weightL ?? null,
+          lastRepsL:   ls.repsL   ?? null,
+          lastWeightR: ls.weightR ?? null,
+          lastRepsR:   ls.repsR   ?? null
+        };
+      }),
+      // rest: plan-spezifischer Wert ist Wahrheit. Settings-Default ist
+      // nur Fallback, falls in plan.js keiner gesetzt ist.
+      rest: (typeof spec.rest === "number" && spec.rest > 0) ? spec.rest : state.settings.defaultRest,
+      repsLow: spec.repsLow ?? 8,
+      repsHigh: spec.repsHigh ?? 12,
+      expanded: false
+    };
+  }
+
   // ─── Workout starten ─────────────────────────────────
   function startWorkout(dayKey) {
     const day = PLAN[dayKey];
@@ -215,27 +323,7 @@
       startedAt: Date.now(),
       warmupDone: WARMUP_ITEMS.map(() => false),
       prBaseline,
-      exercises: day.exercises.map(ex => {
-        const lastEx = last ? last.exercises.find(e => e.id === ex.id) : null;
-        const defaultWeight = lastWeights[ex.id] ?? "";
-        return {
-          id: ex.id,
-          sets: Array.from({ length: ex.sets }, (_, i) => ({
-            weight: lastEx?.sets?.[i]?.weight ?? defaultWeight,
-            reps: lastEx?.sets?.[i]?.reps ?? "",
-            done: false,
-            // Hinweis fürs UI: letztes Mal pro Satz (kann null sein)
-            lastWeight: lastEx?.sets?.[i]?.weight ?? null,
-            lastReps: lastEx?.sets?.[i]?.reps ?? null
-          })),
-          // rest: plan-spezifischer Wert ist Wahrheit. Settings-Default ist
-          // nur Fallback, falls in plan.js keiner gesetzt ist.
-          rest: (typeof ex.rest === "number" && ex.rest > 0) ? ex.rest : state.settings.defaultRest,
-          repsLow: ex.repsLow,
-          repsHigh: ex.repsHigh,
-          expanded: false
-        };
-      })
+      exercises: day.exercises.map(ex => buildWorkoutExercise(ex.id, ex, last, lastWeights))
     };
 
     renderWorkout();
@@ -290,7 +378,7 @@
       if (!ex) continue;
       const maxW = ex.sets.reduce((m, s) => {
         if (!s.done) return m;
-        const w = parseFloat(s.weight);
+        const w = setTopWeight(s);
         return Number.isFinite(w) && w > m ? w : m;
       }, 0);
       if (maxW <= 0) continue;
@@ -328,11 +416,79 @@
     exObj.sets.forEach((set, sIdx) => {
       const slot = document.querySelector(`[data-pr-slot="${exIdx}-${sIdx}"]`);
       if (!slot) return;
-      const w = parseFloat(set.weight);
+      const w = setTopWeight(set);
       const isPR = set.done && Number.isFinite(w) && w > runningMax;
       slot.innerHTML = isPR ? `<span class="pr-badge">PR</span>` : "";
       if (set.done && Number.isFinite(w) && w > runningMax) runningMax = w;
     });
+  }
+
+  // ─── Set-Zeilen-Rendering ────────────────────────────
+  function setInputHTML(field, value, exIdx, sIdx, enterHint, placeholder) {
+    const isWeight = field.startsWith("weight");
+    const v = (value === "" || value == null) ? "" : value;
+    return `<div class="set-input-wrap">
+      <input class="set-input" type="text" inputmode="${isWeight ? "decimal" : "numeric"}" autocomplete="off" enterkeyhint="${enterHint}"
+             value="${v}" data-field="${field}" data-ex="${exIdx}" data-set="${sIdx}" placeholder="${placeholder}"/>
+      <span class="set-input-unit">${isWeight ? "kg" : "Wdh."}</span>
+    </div>`;
+  }
+
+  function setRowHTML(ex, set, exIdx, sIdx) {
+    const checkBtn = `<button class="set-check${set.done ? " done" : ""}" data-check="${exIdx}-${sIdx}" aria-label="Satz abhaken">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>`;
+    const prSlot = `<div class="set-pr" data-pr-slot="${exIdx}-${sIdx}"></div>`;
+    const repsPh = `${ex.repsLow}–${ex.repsHigh}`;
+
+    // Seitengetrennt (L/R) — nur bei einseitigen Übungen im Split-Modus.
+    if (ex.split) {
+      const sideHint = (lw, lr) =>
+        (lw != null && lw !== "") || (lr != null && lr !== "") ? `${lw ?? "–"}×${lr ?? "–"}` : "";
+      const hl = sideHint(set.lastWeightL, set.lastRepsL);
+      const hr = sideHint(set.lastWeightR, set.lastRepsR);
+      const hint = (hl || hr) ? `Zuletzt: L ${hl || "–"} · R ${hr || "–"}` : "";
+      return `
+      <div class="set-row set-row-split${set.done ? " done" : ""}" data-set="${sIdx}">
+        <div class="set-num">${sIdx + 1}</div>
+        <div class="set-split-sides">
+          <div class="set-side">
+            <span class="set-side-label">L</span>
+            ${setInputHTML("weightL", set.weightL, exIdx, sIdx, "next", "–")}
+            ${setInputHTML("repsL", set.repsL, exIdx, sIdx, "next", repsPh)}
+          </div>
+          <div class="set-side">
+            <span class="set-side-label">R</span>
+            ${setInputHTML("weightR", set.weightR, exIdx, sIdx, "next", "–")}
+            ${setInputHTML("repsR", set.repsR, exIdx, sIdx, "done", repsPh)}
+          </div>
+        </div>
+        ${checkBtn}
+        ${hint ? `<div class="set-hint">${hint}</div>` : ""}
+        ${prSlot}
+      </div>`;
+    }
+
+    const hint = (set.lastWeight != null && set.lastWeight !== "") || (set.lastReps != null && set.lastReps !== "")
+      ? `Zuletzt: ${set.lastWeight ?? "–"} kg × ${set.lastReps ?? "–"}` : "";
+    return `
+      <div class="set-row${set.done ? " done" : ""}" data-set="${sIdx}">
+        <div class="set-num">${sIdx + 1}</div>
+        ${setInputHTML("weight", set.weight, exIdx, sIdx, "next", "–")}
+        ${setInputHTML("reps", set.reps, exIdx, sIdx, "done", repsPh)}
+        ${checkBtn}
+        ${hint ? `<div class="set-hint">${hint}</div>` : ""}
+        ${prSlot}
+      </div>`;
+  }
+
+  // Umschalter beidseitig ↔ seitengetrennt (nur einseitige Übungen).
+  function splitToggleHTML(ex, exIdx) {
+    return `<label class="split-toggle">
+      <span>Seiten getrennt eingeben (L/R)</span>
+      <input type="checkbox" class="split-toggle-input" data-split-ex="${exIdx}" ${ex.split ? "checked" : ""}/>
+      <span class="switch"></span>
+    </label>`;
   }
 
   // ─── Workout-Ansicht rendern ─────────────────────────
@@ -361,32 +517,20 @@
           </div>
         </button>
         <div class="exercise-body">
-          ${ex.sets.map((set, sIdx) => {
-            const hint = (set.lastWeight != null && set.lastWeight !== "") || (set.lastReps != null && set.lastReps !== "")
-              ? `Zuletzt: ${set.lastWeight ?? "–"} kg × ${set.lastReps ?? "–"}`
-              : "";
-            return `
-            <div class="set-row${set.done ? " done" : ""}" data-set="${sIdx}">
-              <div class="set-num">${sIdx + 1}</div>
-              <div class="set-input-wrap">
-                <input class="set-input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next"
-                       value="${set.weight}" data-field="weight" data-ex="${exIdx}" data-set="${sIdx}" placeholder="–"/>
-                <span class="set-input-unit">kg</span>
-              </div>
-              <div class="set-input-wrap">
-                <input class="set-input" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done"
-                       value="${set.reps}" data-field="reps" data-ex="${exIdx}" data-set="${sIdx}" placeholder="${ex.repsLow}–${ex.repsHigh}"/>
-                <span class="set-input-unit">Wdh.</span>
-              </div>
-              <button class="set-check${set.done ? " done" : ""}" data-check="${exIdx}-${sIdx}" aria-label="Satz abhaken">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              </button>
-              ${hint ? `<div class="set-hint">${hint}</div>` : ""}
-              <div class="set-pr" data-pr-slot="${exIdx}-${sIdx}"></div>
-            </div>`;
-          }).join("")}
+          ${ex.unilateral ? splitToggleHTML(ex, exIdx) : ""}
+          ${ex.sets.map((set, sIdx) => setRowHTML(ex, set, exIdx, sIdx)).join("")}
           ${renderExerciseHistory(ex.id)}
           <div class="exercise-notes">${meta.notes}</div>
+          <div class="exercise-usernote">
+            <label class="exercise-usernote-label">Deine Notiz</label>
+            <textarea class="exercise-usernote-input" rows="2" data-note-ex="${ex.id}"
+                      placeholder="Griff, Ausführung, Gewichtsvarianten …">${escapeHtml(getUserNote(ex.id))}</textarea>
+          </div>
+          ${(meta.alternatives && meta.alternatives.length) ? `
+          <button class="exercise-swap" data-swap-ex="${exIdx}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            Übung tauschen
+          </button>` : ""}
         </div>
       `;
 
@@ -414,10 +558,37 @@
           const raw = e.target.value.trim().replace(",", ".");
           const val = raw === "" ? "" : parseFloat(raw);
           state.workout.exercises[exIdxI].sets[sIdxI][field] = val;
+          // Live-Summe nachziehen (zählt nur abgehakte Sätze, aber Werte
+          // eines bereits abgehakten Satzes sollen sofort durchschlagen).
+          updateLiveTonnage();
         };
         input.addEventListener("change", persist);
         input.addEventListener("input", persist);
       });
+
+      // Notizfeld pro Übung — speichert global pro Übungs-ID.
+      const noteEl = card.querySelector(".exercise-usernote-input");
+      if (noteEl) {
+        const persistNote = (e) => setUserNote(e.target.dataset.noteEx, e.target.value);
+        noteEl.addEventListener("input", persistNote);
+        noteEl.addEventListener("change", persistNote);
+      }
+
+      // Umschalter beidseitig ↔ seitengetrennt — baut die Übung neu auf.
+      const splitToggle = card.querySelector(".split-toggle-input");
+      if (splitToggle) {
+        splitToggle.addEventListener("change", (e) => {
+          const exI = parseInt(e.target.dataset.splitEx);
+          state.workout.exercises[exI].split = e.target.checked;
+          renderWorkout();
+        });
+      }
+
+      // Übung gegen Alternative tauschen.
+      const swapBtn = card.querySelector(".exercise-swap");
+      if (swapBtn) {
+        swapBtn.addEventListener("click", () => openSwap(parseInt(swapBtn.dataset.swapEx)));
+      }
 
       // Satz abhaken — mit Doppel-Tap-Schutz
       card.querySelectorAll(".set-check").forEach(btn => {
@@ -437,9 +608,10 @@
           updateProgress();
           if (set.done) {
             startTimer(exObj.rest);
-            if (set.weight !== "" && !isNaN(set.weight)) {
+            const top = setTopWeight(set);
+            if (Number.isFinite(top)) {
               const lw = loadLastWeights();
-              lw[exObj.id] = set.weight;
+              lw[exObj.id] = top;
               saveLastWeights(lw);
             }
           } else {
@@ -474,6 +646,27 @@
       });
     });
     $("#workout-progress").textContent = `${day.subtitle} · ${done} / ${total} Sätze`;
+    updateLiveTonnage();
+  }
+
+  // Live mitlaufende Tonnage der laufenden Session (gleiche Formel wie sessionTonnage,
+  // nur auf den noch nicht gespeicherten Workout-State angewandt).
+  function currentWorkoutTonnage() {
+    if (!state.workout) return 0;
+    let t = 0;
+    for (const ex of state.workout.exercises) {
+      const exMeta = EXERCISES[ex.id];
+      for (const s of ex.sets) t += setVolume(s, exMeta);
+    }
+    return t;
+  }
+  function updateLiveTonnage() {
+    const el = $("#workout-tonnage");
+    if (!el) return;
+    const t = currentWorkoutTonnage();
+    el.innerHTML = t > 0
+      ? `<span class="workout-tonnage-value">${formatKg(t)} kg</span><span class="workout-tonnage-label">bewegt</span>`
+      : "";
   }
 
   // ─── Timer (Wall-Clock-basiert) ──────────────────────
@@ -596,6 +789,26 @@
     }
   }
 
+  // Persistiert einen Satz schlank: im Split-Modus die L/R-Werte, sonst den
+  // gemeinsamen Wert. `unilateral`/`split` werden mitgespeichert, damit die
+  // Tonnage später aus den GELOGGTEN Daten rechnet (nicht aus aktueller Meta).
+  function serializeSet(s, ex) {
+    const n = (v) => (v === "" || v == null ? null : v);
+    const out = { done: s.done };
+    if (ex.split) {
+      out.split = true;
+      out.weightL = n(s.weightL);
+      out.repsL = n(s.repsL);
+      out.weightR = n(s.weightR);
+      out.repsR = n(s.repsR);
+    } else {
+      out.weight = n(s.weight);
+      out.reps = n(s.reps);
+    }
+    if (ex.unilateral) out.unilateral = true;
+    return out;
+  }
+
   // ─── Workout beenden ─────────────────────────────────
   function finishWorkout() {
     const history = loadHistory();
@@ -604,11 +817,7 @@
       date: new Date().toISOString(),
       exercises: state.workout.exercises.map(ex => ({
         id: ex.id,
-        sets: ex.sets.map(s => ({
-          weight: s.weight === "" ? null : s.weight,
-          reps: s.reps === "" ? null : s.reps,
-          done: s.done
-        }))
+        sets: ex.sets.map(s => serializeSet(s, ex))
       }))
     };
     history.push(session);
@@ -618,8 +827,9 @@
     const lw = loadLastWeights();
     state.workout.exercises.forEach(ex => {
       const doneWeights = ex.sets
-        .filter(s => s.done && s.weight !== "" && !isNaN(s.weight))
-        .map(s => parseFloat(s.weight));
+        .filter(s => s.done)
+        .map(setTopWeight)
+        .filter(Number.isFinite);
       if (doneWeights.length > 0) {
         lw[ex.id] = Math.max(...doneWeights);
       }
@@ -711,11 +921,78 @@
     return confirmSheet({ title, message, confirmLabel: "OK", cancelLabel: "" }).then(() => {});
   }
 
+  // Listen-Picker (z. B. Alternativübungen). Liefert den gewählten value oder null.
+  function pickSheet(title, items) {
+    return new Promise((resolve) => {
+      const sheet = $("#picker");
+      $("#picker-title").textContent = title;
+      const list = $("#picker-list");
+      const cancelBtn = $("#picker-cancel");
+      list.innerHTML = items.map((it, i) => `
+        <button class="picker-option" data-idx="${i}">
+          <span class="picker-option-label">${it.label}</span>
+          ${it.sub ? `<span class="picker-option-sub">${it.sub}</span>` : ""}
+        </button>`).join("");
+
+      sheet.classList.remove("hidden");
+      requestAnimationFrame(() => sheet.classList.add("visible"));
+
+      function close(result) {
+        sheet.classList.remove("visible");
+        setTimeout(() => sheet.classList.add("hidden"), 220);
+        list.removeEventListener("click", onListClick);
+        cancelBtn.removeEventListener("click", onCancel);
+        sheet.removeEventListener("click", onBackdrop);
+        resolve(result);
+      }
+      const onListClick = (e) => {
+        const btn = e.target.closest(".picker-option");
+        if (!btn) return;
+        close(items[parseInt(btn.dataset.idx)].value);
+      };
+      const onCancel = () => close(null);
+      const onBackdrop = (e) => { if (e.target === sheet) close(null); };
+      list.addEventListener("click", onListClick);
+      cancelBtn.addEventListener("click", onCancel);
+      sheet.addEventListener("click", onBackdrop);
+    });
+  }
+
+  // Punkt 6: Übung im laufenden Workout gegen eine hinterlegte Alternative tauschen.
+  // Sätze/Wdh./Pause der aktuellen Übung bleiben erhalten; die neue Übung wird mit
+  // ihrem letzten Stand (falls vorhanden) vorbelegt.
+  async function openSwap(exI) {
+    const exObj = state.workout.exercises[exI];
+    const meta = EXERCISES[exObj.id] || {};
+    const alts = (meta.alternatives || []).filter(id => EXERCISES[id]);
+    if (!alts.length) return;
+    const chosen = await pickSheet("Übung tauschen", alts.map(id => ({
+      value: id,
+      label: EXERCISES[id].name,
+      sub: EXERCISES[id].target
+    })));
+    if (!chosen) return;
+    const spec = { sets: exObj.sets.length, repsLow: exObj.repsLow, repsHigh: exObj.repsHigh, rest: exObj.rest };
+    const replacement = buildWorkoutExercise(chosen, spec, getLastSessionForDay(state.currentDay), loadLastWeights());
+    replacement.expanded = true;
+    state.workout.exercises[exI] = replacement;
+    renderWorkout();
+  }
+
   // ─── Kalender ────────────────────────────────────────
   const calendarState = { year: null, month: null, selectedDayKey: null };
 
   function ymdKey(d) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  // Lesbare Satz-Zusammenfassung für den Kalender — beidseitig oder L/R-getrennt.
+  function formatSetSummary(s) {
+    if (s.split || s.weightL != null || s.weightR != null || s.repsL != null || s.repsR != null) {
+      const side = (w, r) => `${w ?? "–"}×${r ?? "–"}`;
+      return `L ${side(s.weightL, s.repsL)} · R ${side(s.weightR, s.repsR)}`;
+    }
+    return `${s.weight ?? "–"} kg × ${s.reps ?? "–"}`;
   }
 
   function groupHistoryByDay() {
@@ -792,7 +1069,7 @@
           const name = meta ? meta.name : ex.id;
           const sets = ex.sets
             .filter(s => s.done)
-            .map(s => `${s.weight ?? "–"} kg × ${s.reps ?? "–"}`)
+            .map(formatSetSummary)
             .join(" · ");
           if (!sets) return "";
           return `<div class="calendar-session-ex">
@@ -803,11 +1080,37 @@
         return `<div class="calendar-session">
           <div class="calendar-session-head">
             <span class="calendar-session-day">${dayTitle}</span>
-            <span class="calendar-session-tonnage">${formatKg(t)} kg</span>
+            <div class="calendar-session-head-right">
+              <span class="calendar-session-tonnage">${formatKg(t)} kg</span>
+              <button class="calendar-session-delete" data-session-date="${session.date}" aria-label="Training löschen">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              </button>
+            </div>
           </div>
           ${exHtml}
         </div>`;
       }).join("");
+
+    host.querySelectorAll(".calendar-session-delete").forEach(btn => {
+      btn.addEventListener("click", () => deleteSession(btn.dataset.sessionDate));
+    });
+  }
+
+  // Löscht genau eine Session anhand ihres ISO-Datums (eindeutig, ms-genau)
+  // nach kurzer Bestätigung. Danach Kalender neu rendern — fällt der Tag dabei
+  // leer, räumt renderCalendarDetail die Detailansicht selbst auf.
+  async function deleteSession(dateISO) {
+    const ok = await confirmSheet({
+      title: "Training löschen?",
+      message: "Dieser Trainingseintrag wird unwiderruflich entfernt.",
+      confirmLabel: "Löschen",
+      cancelLabel: "Abbrechen",
+      danger: true
+    });
+    if (!ok) return;
+    const history = loadHistory().filter(s => s.date !== dateISO);
+    saveHistory(history);
+    renderCalendar();
   }
 
   // ─── Settings-Ansicht ────────────────────────────────

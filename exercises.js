@@ -609,9 +609,9 @@ const EXERCISES = {
 
   // ───── Rudermaschine / T-Bar Row ─────
   rudern_maschine: {
-    name: "Rudermaschine / T-Bar",
-    target: "Mittlerer Rücken",
-    notes: "Brust an Polster (falls Maschine). Ellbogen eng am Körper ziehen, Schulterblätter aktiv zusammen.",
+    name: "Rudermaschine (Seated Row)",
+    target: "Oberer Rücken, Lat",
+    notes: "Brust ans Pad, sauber zurückziehen. Ellbogen eng am Körper, Schulterblätter aktiv zusammen.",
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Floor -->
@@ -644,5 +644,214 @@ const EXERCISES = {
         </line>
       </g>
     </svg>`
+  },
+
+  // ───── Abduktoren-Maschine ─────
+  abduktoren: {
+    name: "Abduktoren-Maschine",
+    target: "Gesäß (außen), Hüfte",
+    notes: "Oberkörper leicht nach vorn lehnen — das lenkt die Spannung stärker in die Glutes. Kontrolliert öffnen und schließen, kein Schwung.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Seat -->
+        <rect x="40" y="60" width="20" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <!-- Backrest -->
+        <line x1="50" y1="30" x2="50" y2="62" stroke="#4A4E69" stroke-width="6"/>
+        <!-- Head -->
+        <circle cx="50" cy="28" r="5" fill="#C9ADA7"/>
+        <!-- Torso -->
+        <line x1="50" y1="33" x2="50" y2="62" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Hip joint -->
+        <circle cx="50" cy="62" r="2" fill="#F2E9E4"/>
+        <!-- Left leg swings outward (pivot at hip), with pad -->
+        <g>
+          <animateTransform attributeName="transform" type="rotate"
+            values="0 50 62;-22 50 62;0 50 62" dur="2.4s" repeatCount="indefinite"/>
+          <line x1="50" y1="62" x2="40" y2="90" stroke="#F2E9E4" stroke-width="2.5"/>
+          <rect x="35" y="84" width="6" height="12" rx="1.5" fill="#C9ADA7"/>
+        </g>
+        <!-- Right leg swings outward -->
+        <g>
+          <animateTransform attributeName="transform" type="rotate"
+            values="0 50 62;22 50 62;0 50 62" dur="2.4s" repeatCount="indefinite"/>
+          <line x1="50" y1="62" x2="60" y2="90" stroke="#F2E9E4" stroke-width="2.5"/>
+          <rect x="59" y="84" width="6" height="12" rx="1.5" fill="#C9ADA7"/>
+        </g>
+      </g>
+    </svg>`
+  },
+
+  // ───── Brustpresse (Maschine) ─────
+  brustpresse: {
+    name: "Brustpresse (Maschine)",
+    target: "Brust",
+    notes: "Griffe auf Brusthöhe einstellen. Schulterblätter hinten unten, Ellbogen am Ende nicht ganz durchdrücken.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Backrest -->
+        <line x1="28" y1="36" x2="28" y2="80" stroke="#4A4E69" stroke-width="6"/>
+        <!-- Seat -->
+        <rect x="28" y="76" width="24" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <!-- Head -->
+        <circle cx="38" cy="40" r="5" fill="#C9ADA7"/>
+        <!-- Torso -->
+        <line x1="38" y1="45" x2="38" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Legs -->
+        <line x1="38" y1="76" x2="56" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="56" y1="76" x2="58" y2="90" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Upper arm -->
+        <line x1="40" y1="50" x2="52" y2="54" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="52;48;52" dur="2.3s" repeatCount="indefinite"/>
+        </line>
+        <!-- Forearm pressing forward -->
+        <line x1="52" y1="54" x2="74" y2="54" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x1" values="52;48;52" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="x2" values="74;60;74" dur="2.3s" repeatCount="indefinite"/>
+        </line>
+        <!-- Handle / pad -->
+        <rect x="72" y="46" width="6" height="16" rx="1.5" fill="#C9ADA7">
+          <animate attributeName="x" values="72;58;72" dur="2.3s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </svg>`
+  },
+
+  // ───── Schulterpresse (Maschine) ─────
+  schulterpresse: {
+    name: "Schulterpresse (Maschine)",
+    target: "Schultern",
+    notes: "Rückenlehne nutzen, nicht im unteren Rücken hohlkreuzen. Kontrolliert nach oben drücken, nicht ganz einrasten.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Backrest -->
+        <line x1="34" y1="40" x2="34" y2="80" stroke="#4A4E69" stroke-width="6"/>
+        <!-- Seat -->
+        <rect x="34" y="76" width="26" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <!-- Head -->
+        <circle cx="44" cy="42" r="5" fill="#C9ADA7"/>
+        <!-- Torso -->
+        <line x1="44" y1="47" x2="44" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Legs -->
+        <line x1="44" y1="76" x2="62" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="62" y1="76" x2="64" y2="90" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Upper arms out to handles -->
+        <line x1="42" y1="52" x2="34" y2="48" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="46" y1="52" x2="54" y2="48" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Forearms press up -->
+        <line x1="34" y1="48" x2="34" y2="28" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="y2" values="28;46;28" dur="2.3s" repeatCount="indefinite"/>
+        </line>
+        <line x1="54" y1="48" x2="54" y2="28" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="y2" values="28;46;28" dur="2.3s" repeatCount="indefinite"/>
+        </line>
+        <!-- Handles -->
+        <rect x="28" y="22" width="12" height="6" rx="1.5" fill="#C9ADA7">
+          <animate attributeName="y" values="22;40;22" dur="2.3s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="48" y="22" width="12" height="6" rx="1.5" fill="#C9ADA7">
+          <animate attributeName="y" values="22;40;22" dur="2.3s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </svg>`
+  },
+
+  // ───── Reverse-Fly-Maschine ─────
+  reverse_fly: {
+    name: "Reverse-Fly-Maschine",
+    target: "Hintere Schulter",
+    notes: "Dein Maschinen-Ersatz für die Face Pulls. Bewegung aus der hinteren Schulter, Ellbogen leicht gebeugt, Schulterblätter zusammenführen.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Seat -->
+        <rect x="36" y="76" width="28" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <!-- Chest pad (faces pad) -->
+        <line x1="50" y1="40" x2="50" y2="74" stroke="#4A4E69" stroke-width="6"/>
+        <!-- Machine arms swing outward / back -->
+        <g>
+          <animateTransform attributeName="transform" type="rotate"
+            values="0 38 50;-40 38 50;0 38 50" dur="2.4s" repeatCount="indefinite"/>
+          <line x1="38" y1="50" x2="14" y2="50" stroke="#9A8C98" stroke-width="2"/>
+          <rect x="10" y="44" width="6" height="14" rx="1.5" fill="#C9ADA7"/>
+        </g>
+        <g>
+          <animateTransform attributeName="transform" type="rotate"
+            values="0 62 50;40 62 50;0 62 50" dur="2.4s" repeatCount="indefinite"/>
+          <line x1="62" y1="50" x2="86" y2="50" stroke="#9A8C98" stroke-width="2"/>
+          <rect x="84" y="44" width="6" height="14" rx="1.5" fill="#C9ADA7"/>
+        </g>
+        <!-- Head -->
+        <circle cx="50" cy="34" r="5" fill="#C9ADA7"/>
+        <!-- Torso -->
+        <line x1="50" y1="39" x2="50" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Legs -->
+        <line x1="50" y1="76" x2="40" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="50" y1="76" x2="60" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Upper arms -->
+        <line x1="46" y1="44" x2="38" y2="50" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="54" y1="44" x2="62" y2="50" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Forearms sweep outward to mirror pads -->
+        <line x1="38" y1="50" x2="22" y2="46" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="22;40;22" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="46;50;46" dur="2.4s" repeatCount="indefinite"/>
+        </line>
+        <line x1="62" y1="50" x2="78" y2="46" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="78;60;78" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="46;50;46" dur="2.4s" repeatCount="indefinite"/>
+        </line>
+      </g>
+    </svg>`
   }
 };
+
+/**
+ * Struktur-Metadaten je Übung (Punkt 4/5/6 aus dem Umbau).
+ *
+ *   equipment    – "Maschine" | "Kabel" | "Freihantel" | "Band" | "Körpergewicht"
+ *   unilateral   – true, wenn die Übung pro Seite ausgeführt wird. Steuert sowohl
+ *                  die getrennte L/R-Eingabe als auch die Tonnage (einseitig zählt
+ *                  pro Seite, siehe setVolume() in app.js).
+ *   muscles      – Hauptmuskelgruppe(n), für Filter/Anzeige.
+ *   alternatives – IDs gleichwertiger Übungen (gleiche Muskelgruppe, anderes Gerät),
+ *                  die beim Training schnell getauscht werden können.
+ *
+ * Bewusst als separater Block gehalten, damit die großen SVG-Objekte oben
+ * unangetastet bleiben. Die Schleife darunter merged die Felder in EXERCISES
+ * und setzt Defaults, falls eine Übung hier fehlt.
+ */
+const EXERCISE_META = {
+  beinpresse:       { equipment: "Maschine",      unilateral: false, muscles: ["Quadrizeps", "Gesäß"],            alternatives: ["beinstrecker"] },
+  bankdruecken:     { equipment: "Freihantel",    unilateral: false, muscles: ["Brust", "Schultern", "Trizeps"], alternatives: ["butterfly", "liegestuetze"] },
+  butterfly:        { equipment: "Maschine",      unilateral: false, muscles: ["Brust"],                          alternatives: ["bankdruecken", "liegestuetze"] },
+  latzug_breit:     { equipment: "Kabel",         unilateral: false, muscles: ["Latissimus", "Oberer Rücken"],   alternatives: ["latzug_eng", "kabelrudern"] },
+  rueckenstrecker:  { equipment: "Körpergewicht", unilateral: false, muscles: ["Unterer Rücken", "Gesäß"],       alternatives: ["hip_thrust"] },
+  bauchmaschine:    { equipment: "Maschine",      unilateral: false, muscles: ["Bauch"],                          alternatives: [] },
+  beinstrecker:     { equipment: "Maschine",      unilateral: false, muscles: ["Quadrizeps"],                     alternatives: ["beinpresse"] },
+  beinbeuger:       { equipment: "Maschine",      unilateral: false, muscles: ["Hamstrings"],                     alternatives: ["hip_thrust"] },
+  schulterdruecken: { equipment: "Freihantel",    unilateral: false, muscles: ["Schultern", "Trizeps"],          alternatives: [] },
+  // Rudern am Kabelturm: als einseitige Variante markiert (Punkt 4).
+  kabelrudern:      { equipment: "Kabel",         unilateral: true,  muscles: ["Oberer Rücken", "Rhomboiden"],   alternatives: ["rudern_maschine", "latzug_breit"],
+                      note: "Mit anderen Griffen anderes Gewicht. Mit Bändern weiter zum Bauchnabel und dann hinten pulsieren, einseitig mit 4,5 kg." },
+  bizeps_curls:     { equipment: "Freihantel",    unilateral: false, muscles: ["Bizeps"],                         alternatives: ["latzug_eng"] },
+  trizeps_kabel:    { equipment: "Kabel",         unilateral: false, muscles: ["Trizeps"],                        alternatives: ["liegestuetze"] },
+  hip_thrust:       { equipment: "Freihantel",    unilateral: false, muscles: ["Gesäß"],                          alternatives: ["rueckenstrecker", "beinbeuger"] },
+  // Face Pulls als einseitige Kabelzug-Variante (Punkt 4).
+  face_pulls:       { equipment: "Kabel",         unilateral: true,  muscles: ["Hintere Schulter", "Trapez"],    alternatives: [] },
+  liegestuetze:     { equipment: "Körpergewicht", unilateral: false, muscles: ["Brust", "Schultern", "Trizeps", "Core"], alternatives: ["bankdruecken", "butterfly"] },
+  latzug_eng:       { equipment: "Kabel",         unilateral: false, muscles: ["Latissimus", "Bizeps"],          alternatives: ["latzug_breit", "bizeps_curls"] },
+  rudern_maschine:  { equipment: "Maschine",      unilateral: false, muscles: ["Oberer Rücken", "Latissimus"],   alternatives: ["kabelrudern", "latzug_breit"] },
+  abduktoren:       { equipment: "Maschine",      unilateral: false, muscles: ["Gesäß", "Hüfte"],               alternatives: ["hip_thrust"] },
+  brustpresse:      { equipment: "Maschine",      unilateral: false, muscles: ["Brust"],                         alternatives: ["butterfly", "bankdruecken"] },
+  schulterpresse:   { equipment: "Maschine",      unilateral: false, muscles: ["Schultern"],                     alternatives: ["schulterdruecken"] },
+  reverse_fly:      { equipment: "Maschine",      unilateral: false, muscles: ["Hintere Schulter", "Trapez"],   alternatives: ["face_pulls"] }
+};
+
+// Metadaten in EXERCISES mergen, mit konservativen Defaults für evtl. fehlende IDs.
+Object.entries(EXERCISES).forEach(([id, ex]) => {
+  const meta = EXERCISE_META[id] || {};
+  ex.equipment    = meta.equipment    ?? "Maschine";
+  ex.unilateral   = meta.unilateral   ?? false;
+  ex.muscles      = meta.muscles      ?? [];
+  ex.alternatives = meta.alternatives ?? [];
+  // Vorbelegte Notiz; von der Nutzerin editierbar (gespeichert pro Übung).
+  ex.noteDefault  = meta.note         ?? "";
+});
