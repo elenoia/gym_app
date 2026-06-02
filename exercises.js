@@ -232,6 +232,41 @@ const EXERCISES = {
     </svg>`
   },
 
+  // ───── Knee Tuck am Gymnastikball ─────
+  knee_tuck_ball: {
+    name: "Knee Tuck am Gymnastikball",
+    target: "Bauch, Core",
+    notes: "In der Plank-Position abstützen, die Schienbeine/Füße liegen auf dem Gymnastikball. Den Ball mit den Beinen heranziehen, sodass die Knie Richtung Brust kommen, dann kontrolliert zurückführen.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Floor -->
+        <line x1="10" y1="86" x2="92" y2="86" stroke="#8B8298" stroke-width="1.5"/>
+        <!-- Head -->
+        <circle cx="22" cy="46" r="5" fill="#D89D8E"/>
+        <!-- Support arm to floor -->
+        <line x1="26" y1="50" x2="24" y2="84" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Torso (plank line, shoulders → hip) -->
+        <line x1="26" y1="50" x2="54" y2="58" stroke="#F2E9E4" stroke-width="2.5"/>
+        <circle cx="54" cy="58" r="2" fill="#F2E9E4"/>
+        <!-- Gymnastikball — rollt beim Heranziehen nach innen -->
+        <circle cx="84" cy="76" r="9" stroke="#D89D8E" stroke-width="2.5">
+          <animate attributeName="cx" values="84;64;84" dur="2.6s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Oberschenkel (Hüfte → Knie) -->
+        <line x1="54" y1="58" x2="70" y2="62" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="70;58;70" dur="2.6s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="62;44;62" dur="2.6s" repeatCount="indefinite"/>
+        </line>
+        <!-- Schienbein (Knie → Fuß auf Ball) -->
+        <line x1="70" y1="62" x2="84" y2="67" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x1" values="70;58;70" dur="2.6s" repeatCount="indefinite"/>
+          <animate attributeName="y1" values="62;44;62" dur="2.6s" repeatCount="indefinite"/>
+          <animate attributeName="x2" values="84;66;84" dur="2.6s" repeatCount="indefinite"/>
+        </line>
+      </g>
+    </svg>`
+  },
+
   // ───── Beinstrecker (Leg Extension) ─────
   beinstrecker: {
     name: "Beinstrecker (Leg Extension)",
@@ -824,7 +859,8 @@ const EXERCISE_META = {
   butterfly:        { equipment: "Maschine",      unilateral: false, muscles: ["Brust"],                          alternatives: ["bankdruecken", "liegestuetze"] },
   latzug_breit:     { equipment: "Kabel",         unilateral: false, muscles: ["Latissimus", "Oberer Rücken"],   alternatives: ["latzug_eng", "kabelrudern"] },
   rueckenstrecker:  { equipment: "Körpergewicht", unilateral: false, muscles: ["Unterer Rücken", "Gesäß"],       alternatives: ["hip_thrust"] },
-  bauchmaschine:    { equipment: "Maschine",      unilateral: false, muscles: ["Bauch"],                          alternatives: [] },
+  bauchmaschine:    { equipment: "Maschine",      unilateral: false, muscles: ["Bauch"],                          alternatives: ["knee_tuck_ball"] },
+  knee_tuck_ball:   { equipment: "Körpergewicht", unilateral: false, muscles: ["Bauch", "Core"],                  alternatives: ["bauchmaschine"] },
   beinstrecker:     { equipment: "Maschine",      unilateral: false, muscles: ["Quadrizeps"],                     alternatives: ["beinpresse"] },
   beinbeuger:       { equipment: "Maschine",      unilateral: false, muscles: ["Hamstrings"],                     alternatives: ["hip_thrust"] },
   schulterdruecken: { equipment: "Freihantel",    unilateral: false, muscles: ["Schultern", "Trizeps"],          alternatives: [] },
