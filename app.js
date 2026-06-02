@@ -246,22 +246,6 @@
     const rounded = Math.round(n);
     return rounded.toLocaleString("de-DE");
   }
-  // Map exId → bisheriges Max-Gewicht über alle Sessions (nur abgehakte Sätze)
-  function buildPRMap() {
-    const map = {};
-    for (const session of loadHistory()) {
-      for (const ex of session.exercises) {
-        for (const s of ex.sets) {
-          if (!s.done) continue;
-          const w = setTopWeight(s);
-          if (!Number.isFinite(w)) continue;
-          if (map[ex.id] == null || w > map[ex.id]) map[ex.id] = w;
-        }
-      }
-    }
-    return map;
-  }
-
   // ─── Home rendern ────────────────────────────────────
   function renderHome() {
     // Datums-Overline
@@ -396,12 +380,10 @@
     const last = getLastSessionForDay(dayKey);
 
     state.currentDay = dayKey;
-    const prBaseline = buildPRMap();
     state.workout = {
       day: dayKey,
       startedAt: Date.now(),
       warmupDone: WARMUP_ITEMS.map(() => false),
-      prBaseline,
       exercises: day.exercises.map(ex => buildWorkoutExercise(ex.id, ex, last, lastWeights))
     };
 
@@ -436,295 +418,252 @@
   function updateWarmupLabel() {
     const total = WARMUP_ITEMS.length;
     const done = state.workout.warmupDone.filter(Boolean).length;
-    const label = $("#warmup-label");
-    if (done === total) {
-      label.innerHTML = `Warm-up <svg class="warmup-done-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-      label.classList.add("complete");
-    } else {
-      label.textContent = `Warm-up · ${done}/${total}`;
-      label.classList.remove("complete");
-    }
+    const allDone = done === total;
+    $("#warmup-label").textContent = allDone ? "Warm-up erledigt" : "Warm-up";
+    $("#warmup-meta").textContent = `${done}/${total}`;
+    $("#warmup-check").classList.toggle("on", allDone);
+    $("#warmup-banner").classList.toggle("wu-complete", allDone);
   }
 
-  // ─── Mini-Verlauf einer Übung (letzte 5 Sessions) ────
-  function renderExerciseHistory(exId) {
-    const history = loadHistory();
-    // Sammle die letzten 5 Sessions, in denen diese Übung mit gültigen Daten vorkommt.
-    const points = [];
-    for (let i = history.length - 1; i >= 0 && points.length < 5; i--) {
-      const session = history[i];
-      const ex = session.exercises.find(e => e.id === exId);
-      if (!ex) continue;
-      const maxW = ex.sets.reduce((m, s) => {
-        if (!s.done) return m;
-        const w = setTopWeight(s);
-        return Number.isFinite(w) && w > m ? w : m;
-      }, 0);
-      if (maxW <= 0) continue;
-      points.push({ date: new Date(session.date), weight: maxW });
+  // Bestes „letztes Mal" einer Übung (für den Overload-Hinweis) — höchstes
+  // erfasstes Gewicht und zugehörige Wdh., auch aus L/R.
+  function lastBest(ex) {
+    let best = null;
+    for (const s of ex.sets) {
+      const cands = [
+        { w: s.lastWeight, r: s.lastReps },
+        { w: s.lastWeightL, r: s.lastRepsL },
+        { w: s.lastWeightR, r: s.lastRepsR }
+      ];
+      for (const c of cands) {
+        const w = num(c.w), r = num(c.r);
+        if (Number.isFinite(w) && (!best || w > best.w)) best = { w, r: Number.isFinite(r) ? r : null };
+      }
     }
-    if (points.length === 0) {
-      return `<div class="exercise-history"><div class="exercise-history-title">Letzte Sessions</div><div class="exercise-history-empty">Noch keine Daten</div></div>`;
-    }
-    points.reverse(); // älteste links
-    const maxBar = Math.max(...points.map(p => p.weight));
-    const bars = points.map(p => {
-      const h = Math.max(4, Math.round((p.weight / maxBar) * 36));
-      const d = p.date.toLocaleDateString("de-DE", { day: "numeric", month: "numeric" });
-      return `
-        <div class="exercise-history-item">
-          <span class="exercise-history-weight">${p.weight} kg</span>
-          <div class="exercise-history-bar" style="height:${h}px"></div>
-          <span class="exercise-history-date">${d}</span>
-        </div>`;
-    }).join("");
-    return `<div class="exercise-history">
-      <div class="exercise-history-title">Letzte Sessions (Max. pro Tag)</div>
-      <div class="exercise-history-list">${bars}</div>
-    </div>`;
+    return best && best.w > 0 ? best : null;
   }
 
-  // ─── PR-Badges aktualisieren ─────────────────────────
-  // Ein Satz ist PR, wenn er abgehakt ist und sein Gewicht strikt grösser ist
-  // als das Baseline-Max aus den bisherigen Sessions UND als alle abgehakten
-  // Sätze derselben Übung in dieser Session, die einen kleineren Index haben.
-  // So kann auch innerhalb einer Session mehrfach ein PR gesetzt werden.
-  function updatePRBadges(exObj, exIdx) {
-    const baseline = state.workout.prBaseline[exObj.id] ?? -Infinity;
-    let runningMax = baseline;
-    exObj.sets.forEach((set, sIdx) => {
-      const slot = document.querySelector(`[data-pr-slot="${exIdx}-${sIdx}"]`);
-      if (!slot) return;
-      const w = setTopWeight(set);
-      const isPR = set.done && Number.isFinite(w) && w > runningMax;
-      slot.innerHTML = isPR ? `<span class="pr-badge">PR</span>` : "";
-      if (set.done && Number.isFinite(w) && w > runningMax) runningMax = w;
-    });
-  }
-
-  // ─── Set-Zeilen-Rendering ────────────────────────────
-  function setInputHTML(field, value, exIdx, sIdx, enterHint, placeholder) {
+  // ─── Set-Rendering (Stepper-Logging) ─────────────────
+  // Ein Stepper: [−] [Eingabefeld] [+]. Hybrid — ± verstellt, Antippen tippt.
+  function stepperHTML(field, value, unit, exIdx, sIdx, delta) {
     const isWeight = field.startsWith("weight");
     const v = (value === "" || value == null) ? "" : value;
-    return `<div class="set-input-wrap">
-      <input class="set-input" type="text" inputmode="${isWeight ? "decimal" : "numeric"}" autocomplete="off" enterkeyhint="${enterHint}"
-             value="${v}" data-field="${field}" data-ex="${exIdx}" data-set="${sIdx}" placeholder="${placeholder}"/>
-      <span class="set-input-unit">${isWeight ? "kg" : "Wdh."}</span>
+    return `<span class="stepper">
+      <button class="step" data-ex="${exIdx}" data-set="${sIdx}" data-field="${field}" data-delta="${-delta}" aria-label="weniger">${ICONS.minus}</button>
+      <span class="val"><input class="val-input" type="text" inputmode="${isWeight ? "decimal" : "numeric"}" autocomplete="off"
+            value="${v}" data-field="${field}" data-ex="${exIdx}" data-set="${sIdx}"/><i>${unit}</i></span>
+      <button class="step" data-ex="${exIdx}" data-set="${sIdx}" data-field="${field}" data-delta="${delta}" aria-label="mehr">${ICONS.plus}</button>
+    </span>`;
+  }
+
+  // Kompakte Lese-Darstellung eines Satzes (done/next).
+  function setReadHTML(ex, set) {
+    if (ex.split) {
+      const side = (w, r) => `${w ?? "–"}×${r ?? "–"}`;
+      return `<span class="set-read">L ${side(set.weightL, set.repsL)}<i> · </i>R ${side(set.weightR, set.repsR)}</span>`;
+    }
+    return `<span class="set-read">${set.weight === "" || set.weight == null ? "–" : set.weight} kg<i>×</i>${set.reps === "" || set.reps == null ? "–" : set.reps}</span>`;
+  }
+
+  function setRowHTML(ex, set, exIdx, sIdx, activeIdx) {
+    const stateCls = set.done ? "done" : (sIdx === activeIdx ? "active" : "next");
+    if (stateCls !== "active") {
+      const mark = `<span class="set-mark${set.done ? " ok" : ""}">${set.done ? ICONS.check : ""}</span>`;
+      const undo = set.done ? ` data-undo="${exIdx}-${sIdx}"` : "";
+      return `<div class="set ${stateCls}"${undo} data-set="${sIdx}">
+        <span class="set-n">${sIdx + 1}</span>
+        ${setReadHTML(ex, set)}
+        ${mark}
+      </div>`;
+    }
+    // aktiver Satz → Stepper + Bestätigen
+    const go = `<button class="set-go" data-go="${exIdx}-${sIdx}" aria-label="Satz bestätigen">${ICONS.check}</button>`;
+    if (ex.split) {
+      return `<div class="set active split" data-set="${sIdx}">
+        <span class="set-n">${sIdx + 1}</span>
+        <div class="set-sides">
+          <div class="side"><span class="side-l">L</span>${stepperHTML("weightL", set.weightL, "kg", exIdx, sIdx, 2.5)}${stepperHTML("repsL", set.repsL, "Wdh", exIdx, sIdx, 1)}</div>
+          <div class="side"><span class="side-l">R</span>${stepperHTML("weightR", set.weightR, "kg", exIdx, sIdx, 2.5)}${stepperHTML("repsR", set.repsR, "Wdh", exIdx, sIdx, 1)}</div>
+        </div>
+        ${go}
+      </div>`;
+    }
+    return `<div class="set active" data-set="${sIdx}">
+      <span class="set-n">${sIdx + 1}</span>
+      ${stepperHTML("weight", set.weight, "kg", exIdx, sIdx, 2.5)}
+      ${stepperHTML("reps", set.reps, "Wdh", exIdx, sIdx, 1)}
+      ${go}
     </div>`;
   }
 
-  function setRowHTML(ex, set, exIdx, sIdx) {
-    const checkBtn = `<button class="set-check${set.done ? " done" : ""}" data-check="${exIdx}-${sIdx}" aria-label="Satz abhaken">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </button>`;
-    const prSlot = `<div class="set-pr" data-pr-slot="${exIdx}-${sIdx}"></div>`;
-    const repsPh = `${ex.repsLow}–${ex.repsHigh}`;
-
-    // Seitengetrennt (L/R) — nur bei einseitigen Übungen im Split-Modus.
-    if (ex.split) {
-      const sideHint = (lw, lr) =>
-        (lw != null && lw !== "") || (lr != null && lr !== "") ? `${lw ?? "–"}×${lr ?? "–"}` : "";
-      const hl = sideHint(set.lastWeightL, set.lastRepsL);
-      const hr = sideHint(set.lastWeightR, set.lastRepsR);
-      const hint = (hl || hr) ? `Zuletzt: L ${hl || "–"} · R ${hr || "–"}` : "";
-      return `
-      <div class="set-row set-row-split${set.done ? " done" : ""}" data-set="${sIdx}">
-        <div class="set-num">${sIdx + 1}</div>
-        <div class="set-split-sides">
-          <div class="set-side">
-            <span class="set-side-label">L</span>
-            ${setInputHTML("weightL", set.weightL, exIdx, sIdx, "next", "–")}
-            ${setInputHTML("repsL", set.repsL, exIdx, sIdx, "next", repsPh)}
-          </div>
-          <div class="set-side">
-            <span class="set-side-label">R</span>
-            ${setInputHTML("weightR", set.weightR, exIdx, sIdx, "next", "–")}
-            ${setInputHTML("repsR", set.repsR, exIdx, sIdx, "done", repsPh)}
-          </div>
-        </div>
-        ${checkBtn}
-        ${hint ? `<div class="set-hint">${hint}</div>` : ""}
-        ${prSlot}
-      </div>`;
-    }
-
-    const hint = (set.lastWeight != null && set.lastWeight !== "") || (set.lastReps != null && set.lastReps !== "")
-      ? `Zuletzt: ${set.lastWeight ?? "–"} kg × ${set.lastReps ?? "–"}` : "";
-    return `
-      <div class="set-row${set.done ? " done" : ""}" data-set="${sIdx}">
-        <div class="set-num">${sIdx + 1}</div>
-        ${setInputHTML("weight", set.weight, exIdx, sIdx, "next", "–")}
-        ${setInputHTML("reps", set.reps, exIdx, sIdx, "done", repsPh)}
-        ${checkBtn}
-        ${hint ? `<div class="set-hint">${hint}</div>` : ""}
-        ${prSlot}
-      </div>`;
+  // L/R-Umschalter (Segmented Control) für einseitige Übungen.
+  function segHTML(ex, exIdx) {
+    return `<div class="seg" data-seg-ex="${exIdx}">
+      <button class="${ex.split ? "" : "on"}" data-split="0">Beidseitig</button>
+      <button class="${ex.split ? "on" : ""}" data-split="1">Einseitig L / R</button>
+    </div>`;
   }
 
-  // Umschalter beidseitig ↔ seitengetrennt (nur einseitige Übungen).
-  function splitToggleHTML(ex, exIdx) {
-    return `<label class="split-toggle">
-      <span>Seiten getrennt eingeben (L/R)</span>
-      <input type="checkbox" class="split-toggle-input" data-split-ex="${exIdx}" ${ex.split ? "checked" : ""}/>
-      <span class="switch"></span>
-    </label>`;
+  // Notiz im Training — eingeklappt (Vorschau) oder ausgeklappt (Textarea).
+  function noteHTML(ex) {
+    const note = getUserNote(ex.id);
+    if (ex.noteOpen) {
+      return `<div class="note-edit">
+        <span class="ovl note-ovl">${ICONS.info} Deine Notiz</span>
+        <textarea class="note-input" rows="3" data-note-ex="${ex.id}" placeholder="Griff, Sitzposition, Gefühl …">${escapeHtml(note)}</textarea>
+      </div>`;
+    }
+    return `<button class="note-toggle" data-note-open="${ex.id}">
+      ${ICONS.info} ${note ? `<span class="note-peek">${escapeHtml(note)}</span>` : `<span>Notiz hinzufügen</span>`}
+    </button>`;
   }
 
   // ─── Workout-Ansicht rendern ─────────────────────────
   function renderWorkout() {
     const day = PLAN[state.currentDay];
     $("#workout-title").textContent = day.title;
+    $("#workout-sub").textContent = dotted(day.subtitle);
     updateProgress();
     renderWarmup();
 
+    const total = state.workout.exercises.length;
     const list = $("#exercise-list");
     list.innerHTML = "";
     state.workout.exercises.forEach((ex, exIdx) => {
       const meta = EXERCISES[ex.id];
+      const activeIdx = ex.sets.findIndex(s => !s.done);
+      const ob = lastBest(ex);
       const card = document.createElement("div");
-      card.className = "exercise" + (ex.expanded ? " open" : "");
-
+      card.className = "ex-card" + (ex.expanded ? " open" : "");
+      card.dataset.exId = ex.id;
       card.innerHTML = `
-        <button class="exercise-head" data-action="toggle">
-          <div class="exercise-svg">${meta.svg}</div>
-          <div class="exercise-meta">
-            <h3 class="exercise-name">${meta.name}</h3>
-            <p class="exercise-target">${meta.target} · ${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh} Wdh.</p>
-          </div>
-          <div class="exercise-toggle">
-            <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
+        <button class="ex-head" data-action="toggle">
+          <span class="ex-figure">${meta.svg}</span>
+          <span class="ex-meta">
+            <h3>${escapeHtml(meta.name)}</h3>
+            <p>${escapeHtml(meta.target)} · ${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}</p>
+          </span>
+          <span class="ex-pos">${exIdx + 1}/${total}</span>
+          <span class="ex-chev">${ICONS.chevD}</span>
         </button>
-        <div class="exercise-body">
-          ${ex.unilateral ? splitToggleHTML(ex, exIdx) : ""}
-          ${ex.sets.map((set, sIdx) => setRowHTML(ex, set, exIdx, sIdx)).join("")}
-          ${renderExerciseHistory(ex.id)}
-          <div class="exercise-notes">${meta.notes}</div>
-          <div class="exercise-usernote">
-            <label class="exercise-usernote-label">Deine Notiz</label>
-            <textarea class="exercise-usernote-input" rows="2" data-note-ex="${ex.id}"
-                      placeholder="Griff, Ausführung, Gewichtsvarianten …">${escapeHtml(getUserNote(ex.id))}</textarea>
+        <div class="ex-body">
+          ${ex.unilateral ? segHTML(ex, exIdx) : ""}
+          ${ob ? `<div class="oh-hint">${ICONS.trend} Letztes Mal <b>${escapeHtml(String(ob.w))} kg${ob.r != null ? ` × ${escapeHtml(String(ob.r))}` : ""}</b> — leg noch was drauf.</div>` : ""}
+          <div class="set-stack">
+            ${ex.sets.map((set, sIdx) => setRowHTML(ex, set, exIdx, sIdx, activeIdx)).join("")}
           </div>
-          ${(meta.alternatives && meta.alternatives.length) ? `
-          <button class="exercise-swap" data-swap-ex="${exIdx}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-            Übung tauschen
-          </button>` : ""}
-        </div>
-      `;
+          ${noteHTML(ex)}
+          ${(meta.alternatives && meta.alternatives.length) ? `<button class="ex-swap" data-swap-ex="${exIdx}">${ICONS.swap} Übung tauschen</button>` : ""}
+        </div>`;
 
-      // Aufklappen
-      card.querySelector('[data-action="toggle"]').addEventListener("click", (e) => {
-        if (e.target.closest("input")) return;
+      // Auf-/Zuklappen
+      card.querySelector('[data-action="toggle"]').addEventListener("click", () => {
         ex.expanded = !ex.expanded;
         card.classList.toggle("open");
         if (card.classList.contains("open")) {
-          requestAnimationFrame(() => {
-            card.scrollIntoView({ behavior: "smooth", block: "start" });
-          });
+          requestAnimationFrame(() => card.scrollIntoView({ behavior: "smooth", block: "start" }));
         }
       });
 
-      // Inputs
-      card.querySelectorAll(".set-input").forEach(input => {
-        const persist = (e) => {
-          const exIdxI = parseInt(e.target.dataset.ex);
-          const sIdxI = parseInt(e.target.dataset.set);
-          const field = e.target.dataset.field;
-          // Akzeptiere DE-Komma und EN-Punkt gleichwertig; ignoriere alles
-          // andere — sonst kann ein versehentliches "22,5" als Datenverlust
-          // im abgehakten Satz landen (Tonnage = 0).
-          const raw = e.target.value.trim().replace(",", ".");
-          const val = raw === "" ? "" : parseFloat(raw);
-          state.workout.exercises[exIdxI].sets[sIdxI][field] = val;
-          // Live-Summe nachziehen (zählt nur abgehakte Sätze, aber Werte
-          // eines bereits abgehakten Satzes sollen sofort durchschlagen).
+      // Stepper ± — verstellt den Wert des aktiven Satzes
+      card.querySelectorAll(".step").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const exI = +btn.dataset.ex, sI = +btn.dataset.set, field = btn.dataset.field, d = parseFloat(btn.dataset.delta);
+          const set = state.workout.exercises[exI].sets[sI];
+          const cur = num(set[field]);
+          set[field] = Math.max(0, +(((Number.isFinite(cur) ? cur : 0) + d).toFixed(1)));
+          const inp = card.querySelector(`.val-input[data-ex="${exI}"][data-set="${sI}"][data-field="${field}"]`);
+          if (inp) inp.value = set[field];
           updateLiveTonnage();
-        };
-        input.addEventListener("change", persist);
-        input.addEventListener("input", persist);
+        });
       });
 
-      // Notizfeld pro Übung — speichert global pro Übungs-ID.
-      const noteEl = card.querySelector(".exercise-usernote-input");
-      if (noteEl) {
-        const persistNote = (e) => setUserNote(e.target.dataset.noteEx, e.target.value);
-        noteEl.addEventListener("input", persistNote);
-        noteEl.addEventListener("change", persistNote);
-      }
+      // Direkte Tastatureingabe im Stepper-Feld (Hybrid)
+      card.querySelectorAll(".val-input").forEach(input => {
+        const persist = (e) => {
+          const exI = +e.target.dataset.ex, sI = +e.target.dataset.set, field = e.target.dataset.field;
+          const raw = e.target.value.trim().replace(",", ".");
+          state.workout.exercises[exI].sets[sI][field] = raw === "" ? "" : parseFloat(raw);
+          updateLiveTonnage();
+        };
+        input.addEventListener("input", persist);
+        input.addEventListener("change", persist);
+      });
 
-      // Umschalter beidseitig ↔ seitengetrennt — baut die Übung neu auf.
-      const splitToggle = card.querySelector(".split-toggle-input");
-      if (splitToggle) {
-        splitToggle.addEventListener("change", (e) => {
-          const exI = parseInt(e.target.dataset.splitEx);
-          state.workout.exercises[exI].split = e.target.checked;
+      // Notiz öffnen / bearbeiten
+      const noteToggle = card.querySelector(".note-toggle");
+      if (noteToggle) {
+        noteToggle.addEventListener("click", () => {
+          ex.noteOpen = true;
           renderWorkout();
+          const ta = $(`.note-input[data-note-ex="${ex.id}"]`);
+          if (ta) ta.focus();
         });
       }
-
-      // Übung gegen Alternative tauschen.
-      const swapBtn = card.querySelector(".exercise-swap");
-      if (swapBtn) {
-        swapBtn.addEventListener("click", () => openSwap(parseInt(swapBtn.dataset.swapEx)));
+      const noteInput = card.querySelector(".note-input");
+      if (noteInput) {
+        const persistNote = (e) => setUserNote(e.target.dataset.noteEx, e.target.value);
+        noteInput.addEventListener("input", persistNote);
+        noteInput.addEventListener("change", persistNote);
       }
 
-      // Satz abhaken — mit Doppel-Tap-Schutz
-      card.querySelectorAll(".set-check").forEach(btn => {
-        let busy = false;
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (busy) return;
-          busy = true;
-          setTimeout(() => { busy = false; }, 350);
+      // L/R-Umschalter (Segmented Control)
+      card.querySelectorAll(".seg button").forEach(b => {
+        b.addEventListener("click", () => {
+          state.workout.exercises[exIdx].split = b.dataset.split === "1";
+          renderWorkout();
+        });
+      });
 
-          const [exI, sI] = btn.dataset.check.split("-").map(Number);
+      // Übung gegen Alternative tauschen
+      const swapBtn = card.querySelector(".ex-swap");
+      if (swapBtn) swapBtn.addEventListener("click", () => openSwap(+swapBtn.dataset.swapEx));
+
+      // Satz bestätigen → done, Pause starten
+      card.querySelectorAll(".set-go").forEach(btn => {
+        let busy = false;
+        btn.addEventListener("click", () => {
+          if (busy) return; busy = true; setTimeout(() => { busy = false; }, 350);
+          const [exI, sI] = btn.dataset.go.split("-").map(Number);
           const exObj = state.workout.exercises[exI];
           const set = exObj.sets[sI];
-          set.done = !set.done;
-          btn.classList.toggle("done");
-          btn.closest(".set-row").classList.toggle("done");
-          updateProgress();
-          if (set.done) {
-            startTimer(exObj.rest);
-            const top = setTopWeight(set);
-            if (Number.isFinite(top)) {
-              const lw = loadLastWeights();
-              lw[exObj.id] = top;
-              saveLastWeights(lw);
-            }
-          } else {
-            // Wenn ein gerade-eben gestarteter Timer noch läuft, abbrechen
-            // (Nutzerin hat Häkchen sofort zurückgenommen)
-            stopTimer();
+          set.done = true;
+          const top = setTopWeight(set);
+          if (Number.isFinite(top)) {
+            const lw = loadLastWeights(); lw[exObj.id] = top; saveLastWeights(lw);
           }
-          updatePRBadges(exObj, exI);
+          startTimer(exObj.rest);
+          renderWorkout();
+        });
+      });
+
+      // Erledigten Satz wieder öffnen (Antippen)
+      card.querySelectorAll(".set[data-undo]").forEach(row => {
+        row.addEventListener("click", () => {
+          const [exI, sI] = row.dataset.undo.split("-").map(Number);
+          state.workout.exercises[exI].sets[sI].done = false;
+          stopTimer();
+          renderWorkout();
         });
       });
 
       list.appendChild(card);
     });
 
-    // Default-Zustand am Anfang einer Session: Warmup steht im Fokus,
-    // keine Übung wird automatisch aufgeklappt. Nutzerin tippt selbst auf
-    // die Übung, mit der sie nach dem Warmup beginnt.
+    // Default am Sessionstart: Warm-up im Fokus, keine Übung automatisch offen.
     if (!state.workout.exercises.some(e => e.expanded)) {
       $("#warmup-banner").classList.add("open");
     }
-    // Initialer PR-Badge-Pass (für den seltenen Fall, dass Sätze schon abgehakt sind)
-    state.workout.exercises.forEach((ex, exIdx) => updatePRBadges(ex, exIdx));
   }
 
   function updateProgress() {
-    const day = PLAN[state.currentDay];
     let done = 0, total = 0;
-    state.workout.exercises.forEach(ex => {
-      ex.sets.forEach(s => {
-        total++;
-        if (s.done) done++;
-      });
-    });
-    $("#workout-progress").textContent = `${day.subtitle} · ${done} / ${total} Sätze`;
+    state.workout.exercises.forEach(ex => ex.sets.forEach(s => { total++; if (s.done) done++; }));
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const ring = $("#workout-ring");
+    if (ring) ring.style.setProperty("--p", pct);
+    const label = $("#workout-ring-label");
+    if (label) label.innerHTML = `${done}<i>/${total}</i>`;
     updateLiveTonnage();
   }
 
@@ -736,9 +675,7 @@
     const el = $("#workout-tonnage");
     if (!el) return;
     const t = currentWorkoutTonnage();
-    el.innerHTML = t > 0
-      ? `<span class="workout-tonnage-value">${formatKg(t)} kg</span><span class="workout-tonnage-label">bewegt</span>`
-      : "";
+    el.textContent = t > 0 ? `${formatKg(t)} kg bewegt` : "";
   }
 
   // ─── Timer (Wall-Clock-basiert) ──────────────────────

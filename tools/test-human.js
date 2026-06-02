@@ -1,5 +1,5 @@
-// Reproduces a REAL human typing flow (not fill/seed) to catch gaps the other
-// tests bypass. Types digit-by-digit, checks the box, finishes, reads the total.
+// Real human flow on the stepper UI: type into the active set's value field,
+// confirm with .set-go, read the live total. Plus the "didn't confirm" case.
 const { chromium, devices } = require("playwright");
 const URL = "http://127.0.0.1:8765/index.html";
 
@@ -19,67 +19,42 @@ async function run(label, fn) {
   return { result, errors };
 }
 
+async function openFirst(page) {
+  await page.click('[data-day="A"]');
+  await page.waitForSelector(".ex-card");
+  const ex = page.locator(".ex-card").first();
+  await ex.locator(".ex-head").click();
+  await page.waitForTimeout(150);
+  return ex;
+}
+
 (async () => {
   let allPass = true;
 
-  // Scenario 1: type weight+reps like a human, check, finish, read total.
-  const s1 = await run("type+check", async (page) => {
-    await page.click('[data-day="A"]'); // Tag A
-    await page.waitForSelector(".exercise");
-    const ex = page.locator(".exercise").first();
-    await ex.locator(".exercise-head").click();
-    await page.waitForTimeout(120);
-    const set = ex.locator(".set-row").first();
-    await set.locator('input[data-field="weight"]').pressSequentially("40", { delay: 40 });
-    await set.locator('input[data-field="reps"]').pressSequentially("10", { delay: 40 });
-    await set.locator(".set-check").click();
+  // Scenario 1: type weight, confirm → live shows 400.
+  const s1 = await run("type+confirm", async (page) => {
+    const ex = await openFirst(page);
+    const active = ex.locator(".set.active");
+    await active.locator('.val-input[data-field="weight"]').pressSequentially("40", { delay: 40 });
+    await active.locator(".set-go").click();
     await page.click("#timer-skip").catch(() => {});
     await page.waitForTimeout(120);
     const total = (await page.locator("#workout-tonnage").textContent()).trim();
     console.log("  live total:", JSON.stringify(total), "(want 400)");
-    await page.click("#finish-workout");
-    await page.waitForSelector("#view-home.active");
     return /400/.test(total);
   });
   allPass = allPass && s1.result && !s1.errors.length;
 
-  // Scenario 2: enter values but FORGET to check the box, then finish.
-  const s2 = await run("no-check", async (page) => {
-    await page.click('[data-day="A"]');
-    await page.waitForSelector(".exercise");
-    const ex = page.locator(".exercise").first();
-    await ex.locator(".exercise-head").click();
-    await page.waitForTimeout(120);
-    const set = ex.locator(".set-row").first();
-    await set.locator('input[data-field="weight"]').pressSequentially("40", { delay: 40 });
-    await set.locator('input[data-field="reps"]').pressSequentially("10", { delay: 40 });
-    // no check → live total must stay empty (nothing counted)
+  // Scenario 2: type but DON'T confirm → nothing counted, live empty.
+  const s2 = await run("no-confirm", async (page) => {
+    const ex = await openFirst(page);
+    const active = ex.locator(".set.active");
+    await active.locator('.val-input[data-field="weight"]').pressSequentially("40", { delay: 40 });
     const live = (await page.locator("#workout-tonnage").textContent()).trim();
-    console.log("  live total (unchecked):", JSON.stringify(live), "(want empty)");
+    console.log("  live total (unconfirmed):", JSON.stringify(live), "(want empty)");
     return live === "";
   });
   allPass = allPass && s2.result && !s2.errors.length;
-
-  // Scenario 3: check the box FIRST, then type the numbers.
-  const s3 = await run("check-then-type", async (page) => {
-    await page.click('[data-day="A"]');
-    await page.waitForSelector(".exercise");
-    const ex = page.locator(".exercise").first();
-    await ex.locator(".exercise-head").click();
-    await page.waitForTimeout(120);
-    const set = ex.locator(".set-row").first();
-    await set.locator(".set-check").click();
-    await page.click("#timer-skip").catch(() => {});
-    await set.locator('input[data-field="weight"]').pressSequentially("40", { delay: 40 });
-    await set.locator('input[data-field="reps"]').pressSequentially("10", { delay: 40 });
-    await page.waitForTimeout(120);
-    const total = (await page.locator("#workout-tonnage").textContent()).trim();
-    console.log("  live total (check-first):", JSON.stringify(total), "(want 400)");
-    await page.click("#finish-workout");
-    await page.waitForSelector("#view-home.active");
-    return /400/.test(total);
-  });
-  allPass = allPass && s3.result && !s3.errors.length;
 
   console.log("\nRESULT:", allPass ? "PASS" : "FAIL");
   process.exit(allPass ? 0 : 1);

@@ -40,47 +40,40 @@ const waitVisible = (page, selector) =>
   // Tag A
   await page.click('[data-day="A"]');
   await page.waitForSelector("#view-workout.active");
-  await page.waitForSelector(".exercise"); // exercise list rendered
-  // Workouts starten jetzt mit aufgeklapptem Warmup, alle Übungen zu — selbst öffnen
-  await page.locator(".exercise .exercise-head").first().click();
-  await page.waitForSelector(".exercise.open");
+  await page.waitForSelector(".ex-card"); // exercise list rendered
+  // Workouts starten mit aufgeklapptem Warmup, alle Übungen zu — selbst öffnen
+  const firstEx = page.locator(".ex-card").first();
+  await firstEx.locator(".ex-head").click();
+  await page.waitForSelector(".ex-card.open");
   await shot(page, "03-workout-initial");
 
-  // Set 1
-  const firstSet = page.locator(".exercise.open .set-row").first();
-  await firstSet.locator('input[data-field="weight"]').fill("40");
-  await firstSet.locator('input[data-field="reps"]').fill("10");
+  // Set 1 — Stepper-Wert tippen + bestätigen
+  let active = firstEx.locator(".set.active");
+  await active.locator('.val-input[data-field="weight"]').fill("40");
+  await active.locator('.val-input[data-field="reps"]').fill("10");
   await shot(page, "04-set1-filled");
-
-  await firstSet.locator(".set-check").click();
+  await active.locator(".set-go").click();
   await waitVisible(page, "#timer-overlay");
   await shot(page, "05-timer-running");
   await page.click("#timer-skip");
   await waitHidden(page, "#timer-overlay");
 
   // Set 2
-  const secondSet = page.locator(".exercise.open .set-row").nth(1);
-  await secondSet.locator('input[data-field="weight"]').fill("42.5");
-  await secondSet.locator('input[data-field="reps"]').fill("10");
-  await secondSet.locator(".set-check").click();
+  active = firstEx.locator(".set.active");
+  await active.locator('.val-input[data-field="weight"]').fill("42.5");
+  await active.locator(".set-go").click();
   await waitVisible(page, "#timer-overlay");
   await shot(page, "06-timer-second");
   await page.click("#timer-skip");
   await waitHidden(page, "#timer-overlay");
 
-  // Double-tap-guard sanity: click rapidly twice on set 3 — should still only toggle once
-  const thirdSet = page.locator(".exercise.open .set-row").nth(2);
-  await thirdSet.locator(".set-check").click();
-  await thirdSet.locator(".set-check").click({ delay: 0 });
-  // After two rapid clicks, the set should be UN-done again (1st tap toggles on,
-  // 2nd within debounce window is ignored — but if guard fails it would toggle off).
-  // We'll verify by checking .set-check has .done class:
-  const stillDone = await thirdSet.locator(".set-check").evaluate((el) => el.classList.contains("done"));
-  console.log("after double-tap, set3 .done =", stillDone, "(want true)");
+  // Undo: tap a done set to reopen it, then re-confirm
+  await firstEx.locator(".set[data-undo]").first().click();
+  await page.waitForTimeout(120);
+  const reopened = await firstEx.locator(".set.active").count();
+  console.log("after undo, an active set exists =", reopened > 0, "(want true)");
 
-  await page.click("#timer-skip").catch(() => {});
-
-  // Warm-up Banner ist seit v5 default offen; bestätigen + Screenshot
+  // Warm-up-Chip aufklappen + Screenshot
   await page.waitForSelector("#warmup-banner.open");
   await shot(page, "07-warmup");
 

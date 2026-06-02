@@ -1,6 +1,5 @@
-// Reproduces Elena's screenshot: enter only weight (40,50,50), leave reps
-// untouched, check all three. With reps prefilled to the planned default (10),
-// the live total must read 40*10 + 50*10 + 50*10 = 1400.
+// Reps prefilled to the planned default (10) so logging only weight still counts.
+// Stepper UI: type weight, leave reps untouched, confirm via .set-go.
 const { chromium, devices } = require("playwright");
 const URL = "http://127.0.0.1:8765/index.html";
 
@@ -15,30 +14,27 @@ const URL = "http://127.0.0.1:8765/index.html";
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: "networkidle" });
 
-  await page.click('[data-day="A"]'); // Tag A → Beinpresse first
-  await page.waitForSelector(".exercise");
-  const ex = page.locator(".exercise").first();
-  await ex.locator(".exercise-head").click();
-  await page.waitForTimeout(120);
+  await page.click('[data-day="A"]');
+  await page.waitForSelector(".ex-card");
+  const ex = page.locator('.ex-card[data-ex-id="beinpresse"]');
+  await ex.locator(".ex-head").click();
+  await page.waitForTimeout(150);
 
-  // Reps field should already hold a real default value (10), not be empty.
-  const repsPrefill = await ex.locator(".set-row").nth(0).locator('input[data-field="reps"]').inputValue();
-  console.log("reps prefill (set1):", JSON.stringify(repsPrefill), "(want \"10\")");
+  const repsPrefill = await ex.locator('.set.active .val-input[data-field="reps"]').inputValue();
+  console.log("reps prefill (active set):", JSON.stringify(repsPrefill), "(want \"10\")");
 
   const weights = ["40", "50", "50"];
   for (let i = 0; i < 3; i++) {
-    const s = ex.locator(".set-row").nth(i);
-    await s.locator('input[data-field="weight"]').pressSequentially(weights[i], { delay: 30 });
-    // deliberately DO NOT touch reps
-    await s.locator(".set-check").click();
+    const active = ex.locator(".set.active");
+    await active.locator('.val-input[data-field="weight"]').fill(weights[i]); // reps untouched
+    await active.locator(".set-go").click();
     await page.click("#timer-skip").catch(() => {});
-    await page.waitForTimeout(80);
+    await page.waitForTimeout(100);
   }
 
   const live = (await page.locator("#workout-tonnage").textContent()).trim();
   console.log("live total:", JSON.stringify(live), "(want contains 1.400)");
 
-  // Finish and confirm it persists into the calendar (dashboard card removed).
   await page.click("#finish-workout");
   await page.waitForSelector("#view-home.active");
   await page.waitForTimeout(150);
