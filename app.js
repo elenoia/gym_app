@@ -105,6 +105,7 @@
     trend: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>`,
     info:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.8" r="0.4" fill="currentColor"/></svg>`,
     play:  `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg>`,
+    undo:  `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>`,
   };
 
   // Mascot fürs Plan-Badge — nach Reihenfolge A/B/C/D, danach zyklisch.
@@ -405,8 +406,8 @@
     `).join("");
     content.querySelectorAll(".warmup-item").forEach(row => {
       const i = parseInt(row.dataset.warmup, 10);
-      row.querySelector(".warmup-check").addEventListener("click", (e) => {
-        e.stopPropagation();
+      // Ganze Zeile ist Tap-Ziel (nicht nur der 26px-Button) — daumenfreundlich.
+      row.addEventListener("click", () => {
         state.workout.warmupDone[i] = !state.workout.warmupDone[i];
         row.classList.toggle("done");
         row.querySelector(".warmup-check").classList.toggle("done");
@@ -469,30 +470,43 @@
   function setRowHTML(ex, set, exIdx, sIdx, activeIdx) {
     const stateCls = set.done ? "done" : (sIdx === activeIdx ? "active" : "next");
     if (stateCls !== "active") {
-      const mark = `<span class="set-mark${set.done ? " ok" : ""}">${set.done ? ICONS.check : ""}</span>`;
-      const undo = set.done ? ` data-undo="${exIdx}-${sIdx}"` : "";
-      return `<div class="set ${stateCls}"${undo} data-set="${sIdx}">
+      // Erledigter Satz: antippbar zum Zurücknehmen → dezentes Undo-Glyph als
+      // Affordance (sonst ist nicht erkennbar, dass man rückgängig machen kann).
+      if (set.done) {
+        return `<div class="set done" data-undo="${exIdx}-${sIdx}" data-set="${sIdx}" role="button" aria-label="Satz ${sIdx + 1} rückgängig machen">
+          <span class="set-n">${sIdx + 1}</span>
+          ${setReadHTML(ex, set)}
+          <span class="set-undo" aria-hidden="true">${ICONS.undo}</span>
+          <span class="set-mark ok">${ICONS.check}</span>
+        </div>`;
+      }
+      return `<div class="set next" data-set="${sIdx}">
         <span class="set-n">${sIdx + 1}</span>
         ${setReadHTML(ex, set)}
-        ${mark}
+        <span class="set-mark"></span>
       </div>`;
     }
-    // aktiver Satz → Stepper + Bestätigen
-    const go = `<button class="set-go" data-go="${exIdx}-${sIdx}" aria-label="Satz bestätigen">${ICONS.check}</button>`;
+    // Aktiver Satz → Stepper-Felder oben, Bestätigen als vollbreiter Button
+    // darunter. So läuft nichts über den Kartenrand und das Tap-Ziel ist groß.
+    const go = `<button class="set-go" data-go="${exIdx}-${sIdx}" aria-label="Satz ${sIdx + 1} bestätigen">${ICONS.check}<span>Satz fertig</span></button>`;
     if (ex.split) {
       return `<div class="set active split" data-set="${sIdx}">
-        <span class="set-n">${sIdx + 1}</span>
-        <div class="set-sides">
-          <div class="side"><span class="side-l">L</span>${stepperHTML("weightL", set.weightL, "kg", exIdx, sIdx, 2.5)}${stepperHTML("repsL", set.repsL, "Wdh", exIdx, sIdx, 1)}</div>
-          <div class="side"><span class="side-l">R</span>${stepperHTML("weightR", set.weightR, "kg", exIdx, sIdx, 2.5)}${stepperHTML("repsR", set.repsR, "Wdh", exIdx, sIdx, 1)}</div>
+        <div class="set-fields">
+          <span class="set-n">${sIdx + 1}</span>
+          <div class="set-sides">
+            <div class="side"><span class="side-l">L</span>${stepperHTML("weightL", set.weightL, "kg", exIdx, sIdx, 2.5)}${stepperHTML("repsL", set.repsL, "Wdh", exIdx, sIdx, 1)}</div>
+            <div class="side"><span class="side-l">R</span>${stepperHTML("weightR", set.weightR, "kg", exIdx, sIdx, 2.5)}${stepperHTML("repsR", set.repsR, "Wdh", exIdx, sIdx, 1)}</div>
+          </div>
         </div>
         ${go}
       </div>`;
     }
     return `<div class="set active" data-set="${sIdx}">
-      <span class="set-n">${sIdx + 1}</span>
-      ${stepperHTML("weight", set.weight, "kg", exIdx, sIdx, 2.5)}
-      ${stepperHTML("reps", set.reps, "Wdh", exIdx, sIdx, 1)}
+      <div class="set-fields">
+        <span class="set-n">${sIdx + 1}</span>
+        ${stepperHTML("weight", set.weight, "kg", exIdx, sIdx, 2.5)}
+        ${stepperHTML("reps", set.reps, "Wdh", exIdx, sIdx, 1)}
+      </div>
       ${go}
     </div>`;
   }
@@ -551,7 +565,7 @@
         </div>
         <div class="ex-body">
           ${ex.unilateral ? segHTML(ex, exIdx) : ""}
-          ${ob ? `<div class="oh-hint">${ICONS.trend} Letztes Mal <b>${escapeHtml(String(ob.w))} kg${ob.r != null ? ` × ${escapeHtml(String(ob.r))}` : ""}</b> — leg noch was drauf.</div>` : ""}
+          ${ob ? `<div class="oh-hint">${ICONS.trend} Letztes Mal <b>${escapeHtml(String(ob.w))} kg${ob.r != null ? ` × ${escapeHtml(String(ob.r))}` : ""}</b></div>` : ""}
           <div class="set-stack">
             ${ex.sets.map((set, sIdx) => setRowHTML(ex, set, exIdx, sIdx, activeIdx)).join("")}
           </div>
@@ -635,6 +649,7 @@
           const exObj = state.workout.exercises[exI];
           const set = exObj.sets[sI];
           set.done = true;
+          haptic(15); // kurzer Tick beim Abhaken
           const top = setTopWeight(set);
           if (Number.isFinite(top)) {
             const lw = loadLastWeights(); lw[exObj.id] = top; saveLastWeights(lw);
@@ -720,12 +735,19 @@
     hideTimerOverlay();
   }
 
+  // Haptik als progressive enhancement: respektiert die Vibrations-Einstellung,
+  // existiert nur auf Geräten mit navigator.vibrate (z. B. Android-Chrome;
+  // iOS Safari kennt es nicht → still ohne Effekt).
+  function haptic(pattern) {
+    if (state.settings.vibration && navigator.vibrate) {
+      try { navigator.vibrate(pattern); } catch {}
+    }
+  }
+
   function finishTimer() {
     if (state.timer?.tickId) clearInterval(state.timer.tickId);
     if (state.settings.sound) playBeep();
-    if (state.settings.vibration && navigator.vibrate) {
-      try { navigator.vibrate([200, 100, 200]); } catch {}
-    }
+    haptic([200, 100, 200]);
     setTimeout(() => {
       hideTimerOverlay();
       state.timer = null;

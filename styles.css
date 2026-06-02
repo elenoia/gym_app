@@ -212,8 +212,9 @@ h1, h2, h3 {
 .wu-meta { font-size: 11.5px; color: var(--muted); }
 .warmup-content { display: none; padding: 4px 4px 2px; }
 .warmup-banner.open .warmup-content { display: block; }
-.warmup-item { display: flex; align-items: center; gap: 11px; padding: 9px 4px; border-top: 1px solid var(--line); font-size: 13px; color: var(--dim); }
+.warmup-item { display: flex; align-items: center; gap: 11px; padding: 9px 4px; border-top: 1px solid var(--line); font-size: 13px; color: var(--dim); cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: var(--r-sm); }
 .warmup-item:first-of-type { border-top: none; }
+.warmup-item:active { background: var(--surface-2); }
 .warmup-item.done .warmup-text { color: var(--muted); text-decoration: line-through; }
 .warmup-check { width: 26px; height: 26px; flex: 0 0 auto; border-radius: 8px; background: var(--surface-2);
   border: 1px solid var(--line); display: grid; place-items: center; color: var(--muted); transition: all .15s; }
@@ -249,29 +250,39 @@ h1, h2, h3 {
 .set-stack { display: flex; flex-direction: column; gap: 9px; }
 .set { display: flex; align-items: center; gap: 10px; padding: 7px 4px; border-radius: var(--r-sm); }
 .set-n { width: 20px; flex: 0 0 auto; text-align: center; font-size: 13px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
-.set.done { opacity: .5; }
+.set.done { opacity: .5; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.set.done:active { opacity: .72; }
 .set.next { opacity: .62; }
-.set.active { background: var(--accent-soft); padding: 11px 9px; margin: 0 -5px; }
+/* Aktiver Satz: Highlight-Block mit Feldern oben und Bestätigen-Button als
+   volle Breite darunter (Spalten-Layout). Bleibt komplett in der Karte —
+   nichts ragt mehr über den Rand. */
+.set.active { background: var(--accent-soft); padding: 11px 8px; margin: 0; flex-direction: column; align-items: stretch; gap: 10px; }
+.set-fields { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .set-read { flex: 1; font-size: 15px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 .set-read i { font-style: normal; color: var(--muted); font-weight: 500; margin: 0 6px; }
 .set-mark { width: 30px; height: 30px; flex: 0 0 auto; border-radius: 9px; border: 1.6px solid var(--line); display: grid; place-items: center; color: var(--on-accent); }
 .set-mark.ok { background: var(--accent); border-color: var(--accent); }
+/* Undo-Hinweis am erledigten Satz — dezent in Akzentfarbe (durch die .5-Opacity
+   der Zeile gedämpft), signalisiert „antippen zum Zurücknehmen". */
+.set-undo { flex: 0 0 auto; display: inline-flex; align-items: center; color: var(--accent); }
 
 /* Stepper (Hybrid: ± und Tippen) */
-.stepper { flex: 1; display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-radius: 11px; padding: 4px; gap: 2px; }
+.stepper { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-radius: 11px; padding: 4px; gap: 2px; }
 .stepper .step { width: 34px; height: 34px; flex: 0 0 auto; border-radius: 8px; display: grid; place-items: center; color: var(--text); transition: background .12s; }
 .stepper .step:active { background: var(--surface-2); }
 .stepper .val { display: flex; align-items: baseline; gap: 3px; min-width: 0; }
 .stepper .val input { width: 3.2ch; border: none; background: none; outline: none; color: var(--text); text-align: center;
   font: inherit; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; padding: 0; }
 .stepper .val i { font-style: normal; font-size: 10px; font-weight: 600; color: var(--muted); }
-.set-go { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 12px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; transition: transform .12s; }
-.set-go:active { transform: scale(0.92); }
+.set-go { width: 100%; height: 44px; flex: 0 0 auto; border-radius: 11px; background: var(--accent); color: var(--on-accent);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 700; transition: transform .12s; }
+.set-go:active { transform: scale(0.985); }
 
-/* aktiver Satz, seitengetrennt (L/R) */
-.set.active.split { align-items: center; }
+/* aktiver Satz, seitengetrennt (L/R) — Nummer oben am ersten Feld ausgerichtet */
+.set.active.split .set-fields { align-items: flex-start; }
+.set.active.split .set-n { margin-top: 7px; }
 .set.active.split .set-sides { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.set.active.split .side { display: flex; align-items: center; gap: 8px; }
+.set.active.split .side { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .set.active.split .side-l { width: 14px; flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--muted); text-align: center; }
 
 /* Segmented Control (L/R) */

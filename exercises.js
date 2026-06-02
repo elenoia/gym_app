@@ -889,5 +889,7 @@ Object.entries(EXERCISES).forEach(([id, ex]) => {
   ex.muscles      = meta.muscles      ?? [];
   ex.alternatives = meta.alternatives ?? [];
   // Vorbelegte Notiz; von der Nutzerin editierbar (gespeichert pro Übung).
-  ex.noteDefault  = meta.note         ?? "";
+  // Reihenfolge: spezifische META-Notiz (z. B. Kabelrudern) → sonst der
+  // Ausführungs-Tipp der Übung, damit beim Training direkt ein Hinweis steht.
+  ex.noteDefault  = meta.note ?? ex.notes ?? "";
 });
