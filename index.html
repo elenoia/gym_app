@@ -23,7 +23,7 @@
         <div class="hh-row">
           <div>
             <p class="ovl" id="home-date">—</p>
-            <h1 class="greeting">Hallo Elena</h1>
+            <h1 class="greeting">Hallo Elena!</h1>
           </div>
           <div class="hh-actions">
             <button class="iconbtn" id="open-calendar" aria-label="Verlauf">
@@ -95,6 +95,28 @@
       <div class="exercise-list" id="exercise-list"></div>
 
       <button class="finish-btn" id="finish-workout">Training beenden</button>
+    </section>
+
+    <!-- Übungsdetail -->
+    <section id="view-exercise" class="view">
+      <header class="wk-head">
+        <button class="iconbtn ghost" id="detail-back" aria-label="Zurück">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="wk-title">
+          <h2 class="ex-detail-title" id="detail-title"></h2>
+          <p class="wk-sub" id="detail-sub"></p>
+        </div>
+        <button class="iconbtn ghost" id="detail-swap" aria-label="Übung tauschen">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 2 21 6 17 10"/><path d="M3 6h18"/><polyline points="7 14 3 18 7 22"/><path d="M21 18H3"/></svg>
+        </button>
+      </header>
+      <div class="detail-hero"><span class="detail-figure" id="detail-figure"></span></div>
+      <div class="tag-row" id="detail-tags"></div>
+      <div class="scheme-row" id="detail-scheme"></div>
+      <div id="detail-seg"></div>
+      <div class="note-card" id="detail-note"></div>
+      <div id="detail-alts"></div>
     </section>
 
     <!-- Settings -->

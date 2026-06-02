@@ -88,7 +88,8 @@
     home: $("#view-home"),
     workout: $("#view-workout"),
     settings: $("#view-settings"),
-    calendar: $("#view-calendar")
+    calendar: $("#view-calendar"),
+    exercise: $("#view-exercise")
   };
 
   // ─── Inline-Icons (stroke-based, currentColor) ───────
@@ -264,7 +265,7 @@
     // „Heute dran"-Karte
     const todayHost = $("#home-today");
     todayHost.innerHTML = `
-      <p class="section-label">Heute dran</p>
+      <p class="section-label">Schnellstart</p>
       <button class="today-card" data-day="${todayKey}">
         <span class="today-top">
           <span class="today-mascot">${mascotFor(0)}</span>
@@ -537,15 +538,17 @@
       card.className = "ex-card" + (ex.expanded ? " open" : "");
       card.dataset.exId = ex.id;
       card.innerHTML = `
-        <button class="ex-head" data-action="toggle">
-          <span class="ex-figure">${meta.svg}</span>
-          <span class="ex-meta">
-            <h3>${escapeHtml(meta.name)}</h3>
-            <p>${escapeHtml(meta.target)} · ${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}</p>
-          </span>
-          <span class="ex-pos">${exIdx + 1}/${total}</span>
-          <span class="ex-chev">${ICONS.chevD}</span>
-        </button>
+        <div class="ex-head">
+          <button class="ex-figure" data-detail="${exIdx}" aria-label="Übungsdetail">${meta.svg}</button>
+          <button class="ex-toggle" data-action="toggle">
+            <span class="ex-meta">
+              <h3>${escapeHtml(meta.name)}</h3>
+              <p>${escapeHtml(meta.target)} · ${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}</p>
+            </span>
+            <span class="ex-pos">${exIdx + 1}/${total}</span>
+            <span class="ex-chev">${ICONS.chevD}</span>
+          </button>
+        </div>
         <div class="ex-body">
           ${ex.unilateral ? segHTML(ex, exIdx) : ""}
           ${ob ? `<div class="oh-hint">${ICONS.trend} Letztes Mal <b>${escapeHtml(String(ob.w))} kg${ob.r != null ? ` × ${escapeHtml(String(ob.r))}` : ""}</b> — leg noch was drauf.</div>` : ""}
@@ -564,6 +567,10 @@
           requestAnimationFrame(() => card.scrollIntoView({ behavior: "smooth", block: "start" }));
         }
       });
+
+      // Figur antippen → Übungsdetail
+      const figBtn = card.querySelector(".ex-figure[data-detail]");
+      if (figBtn) figBtn.addEventListener("click", () => openExerciseDetail(+figBtn.dataset.detail));
 
       // Stepper ± — verstellt den Wert des aktiven Satzes
       card.querySelectorAll(".step").forEach(btn => {
@@ -978,22 +985,78 @@
   // Punkt 6: Übung im laufenden Workout gegen eine hinterlegte Alternative tauschen.
   // Sätze/Wdh./Pause der aktuellen Übung bleiben erhalten; die neue Übung wird mit
   // ihrem letzten Stand (falls vorhanden) vorbelegt.
-  async function openSwap(exI) {
+  function replaceExercise(exI, newId) {
     const exObj = state.workout.exercises[exI];
-    const meta = EXERCISES[exObj.id] || {};
-    const alts = (meta.alternatives || []).filter(id => EXERCISES[id]);
-    if (!alts.length) return;
-    const chosen = await pickSheet("Übung tauschen", alts.map(id => ({
-      value: id,
-      label: EXERCISES[id].name,
-      sub: EXERCISES[id].target
-    })));
-    if (!chosen) return;
     const spec = { sets: exObj.sets.length, repsLow: exObj.repsLow, repsHigh: exObj.repsHigh, rest: exObj.rest };
-    const replacement = buildWorkoutExercise(chosen, spec, getLastSessionForDay(state.currentDay), loadLastWeights());
+    const replacement = buildWorkoutExercise(newId, spec, getLastSessionForDay(state.currentDay), loadLastWeights());
     replacement.expanded = true;
     state.workout.exercises[exI] = replacement;
     renderWorkout();
+  }
+  async function openSwap(exI) {
+    const meta = EXERCISES[state.workout.exercises[exI].id] || {};
+    const alts = (meta.alternatives || []).filter(id => EXERCISES[id]);
+    if (!alts.length) return;
+    const chosen = await pickSheet("Übung tauschen", alts.map(id => ({
+      value: id, label: EXERCISES[id].name, sub: EXERCISES[id].target
+    })));
+    if (chosen) replaceExercise(exI, chosen);
+  }
+
+  // ─── Übungsdetail-Screen ─────────────────────────────
+  function fmtRest(sec) {
+    const s = Math.max(0, parseInt(sec, 10) || 0);
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  }
+  function openExerciseDetail(exIdx) {
+    state.detailExIdx = exIdx;
+    renderExerciseDetail();
+    showView("exercise");
+  }
+  function renderExerciseDetail() {
+    const ex = state.workout.exercises[state.detailExIdx];
+    if (!ex) return;
+    const meta = EXERCISES[ex.id];
+    $("#detail-title").textContent = meta.name;
+    $("#detail-sub").textContent = meta.target;
+    $("#detail-figure").innerHTML = meta.svg;
+
+    const tags = [meta.equipment, ...(meta.muscles || [])].filter(Boolean);
+    $("#detail-tags").innerHTML = tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+
+    const ob = lastBest(ex);
+    const scheme = [
+      { l: "Sätze", v: `${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}` },
+      { l: "Pause", v: fmtRest(ex.rest) },
+      { l: "Letztes", v: ob ? `${ob.w} kg` : "–" }
+    ];
+    $("#detail-scheme").innerHTML = scheme.map(s =>
+      `<div class="scheme"><span class="ovl">${s.l}</span><b>${escapeHtml(String(s.v))}</b></div>`).join("");
+
+    const segHost = $("#detail-seg");
+    segHost.innerHTML = ex.unilateral ? segHTML(ex, state.detailExIdx) : "";
+    segHost.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+      ex.split = b.dataset.split === "1";
+      renderExerciseDetail();
+    }));
+
+    $("#detail-note").innerHTML =
+      `<span class="ovl note-ovl">${ICONS.info} Ausführung</span><p>${escapeHtml(meta.notes || "")}</p>`;
+
+    const alts = (meta.alternatives || []).filter(id => EXERCISES[id]);
+    const altHost = $("#detail-alts");
+    altHost.innerHTML = alts.length
+      ? `<p class="section-label">Alternativen</p><div class="alt-list">${alts.map(id => `
+          <button class="alt" data-alt="${id}">
+            <span class="alt-figure">${EXERCISES[id].svg}</span>
+            <span class="alt-main"><b>${escapeHtml(EXERCISES[id].name)}</b><span>${escapeHtml(EXERCISES[id].equipment || "")}</span></span>
+            <span class="alt-swap">${ICONS.swap}</span>
+          </button>`).join("")}</div>`
+      : "";
+    altHost.querySelectorAll(".alt").forEach(btn => btn.addEventListener("click", () => {
+      replaceExercise(state.detailExIdx, btn.dataset.alt);
+      showView("workout");
+    }));
   }
 
   // ─── Kalender ────────────────────────────────────────
@@ -1263,6 +1326,13 @@
       showView("calendar");
     });
     $("#back-from-calendar").addEventListener("click", () => showView("home"));
+
+    // Übungsdetail
+    $("#detail-back").addEventListener("click", () => { renderWorkout(); showView("workout"); });
+    $("#detail-swap").addEventListener("click", async () => {
+      await openSwap(state.detailExIdx);
+      showView("workout");
+    });
     $("#cal-prev").addEventListener("click", () => {
       calendarState.month -= 1;
       if (calendarState.month < 0) { calendarState.month = 11; calendarState.year -= 1; }

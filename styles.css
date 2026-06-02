@@ -297,6 +297,37 @@ h1, h2, h3 {
 .ex-swap:active { color: var(--accent); border-color: var(--accent-line); }
 .ex-swap svg { flex: 0 0 auto; }
 
+/* Kopf: Figur (→ Detail) + Toggle (auf/zu) getrennt klickbar */
+.ex-toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: 13px; text-align: left; }
+.ex-figure { cursor: pointer; }
+
+/* ── Übungsdetail-Screen ── */
+.ex-detail-title { font-size: 21px !important; }
+.detail-hero { height: 128px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line);
+  display: grid; place-items: center; margin-bottom: 15px; }
+.detail-figure { width: 104px; height: 104px; display: block; }
+.detail-figure svg { width: 100%; height: 100%; display: block; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+.tag { font-size: 11.5px; font-weight: 500; color: var(--dim); background: var(--surface); border: 1px solid var(--line);
+  padding: 5px 11px; border-radius: var(--r-xs); }
+.scheme-row { display: flex; gap: 9px; margin-bottom: 14px; }
+.scheme { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 11px 13px;
+  display: flex; flex-direction: column; gap: 4px; }
+.scheme b { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note-card { background: var(--surface); border: 1px solid var(--line); border-left: 2.5px solid var(--accent-line);
+  border-radius: var(--r-sm); padding: 14px 15px; margin-bottom: 22px; }
+.note-card p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--dim); }
+.alt-list { display: flex; flex-direction: column; gap: 9px; }
+.alt { display: flex; align-items: center; gap: 12px; width: 100%; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-sm); padding: 10px 13px; text-align: left; transition: background .14s; }
+.alt:active { background: var(--surface-2); }
+.alt-figure { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 11px; background: var(--bg); padding: 4px; overflow: hidden; }
+.alt-figure svg { width: 100%; height: 100%; display: block; }
+.alt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.alt-main b { font-size: 14.5px; font-weight: 600; }
+.alt-main span { font-size: 11.5px; color: var(--muted); }
+.alt-swap { color: var(--accent); flex: 0 0 auto; display: grid; place-items: center; }
+
 /* Auswahl-Picker */
 .picker-list {
   display: flex;
