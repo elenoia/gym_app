@@ -33,18 +33,14 @@ const URL = "http://127.0.0.1:8765/index.html";
 
   await page.reload({ waitUntil: "networkidle" });
 
-  // Home total ("Insgesamt bewegt")
-  const homeTotal = await page.locator(".tonnage-value").textContent();
-  console.log("home total:", homeTotal, "(want 622 kg)");
-
-  // Calendar per-session tonnage
+  // Calendar per-session tonnage (the dashboard total card was removed by design).
   await page.click("#open-calendar");
   await page.click(".calendar-day.has-workout");
   await page.waitForSelector(".calendar-session");
   const sessTon = await page.locator(".calendar-session-tonnage").first().textContent();
   console.log("session tonnage:", sessTon, "(want 622 kg)");
 
-  const pass = homeTotal.includes("622") && sessTon.includes("622");
+  const pass = sessTon.includes("622");
   console.log("RESULT:", pass ? "PASS" : "FAIL");
 
   await browser.close();

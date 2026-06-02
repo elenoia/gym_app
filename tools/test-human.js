@@ -35,11 +35,10 @@ async function run(label, fn) {
     await set.locator(".set-check").click();
     await page.click("#timer-skip").catch(() => {});
     await page.waitForTimeout(120);
+    const total = (await page.locator("#workout-tonnage").textContent()).trim();
+    console.log("  live total:", JSON.stringify(total), "(want 400)");
     await page.click("#finish-workout");
     await page.waitForSelector("#view-home.active");
-    await page.waitForTimeout(150);
-    const total = await page.locator(".tonnage-value").textContent().catch(() => "(no card)");
-    console.log("  home total:", total, "(want 400 kg)");
     return /400/.test(total);
   });
   allPass = allPass && s1.result && !s1.errors.length;
@@ -54,17 +53,12 @@ async function run(label, fn) {
     const set = ex.locator(".set-row").first();
     await set.locator('input[data-field="weight"]').pressSequentially("40", { delay: 40 });
     await set.locator('input[data-field="reps"]').pressSequentially("10", { delay: 40 });
-    // no check
-    await page.click("#finish-workout");
-    // confirm "Trotzdem beenden?" sheet
-    await page.waitForSelector("#sheet:not(.hidden)").catch(() => {});
-    await page.click("#sheet-confirm").catch(() => {});
-    await page.waitForSelector("#view-home.active");
-    await page.waitForTimeout(150);
-    const total = await page.locator(".tonnage-value").textContent().catch(() => "(no card)");
-    console.log("  home total (unchecked):", total, "(0 expected -> card hidden = '(no card)')");
-    return true; // informational
+    // no check → live total must stay empty (nothing counted)
+    const live = (await page.locator("#workout-tonnage").textContent()).trim();
+    console.log("  live total (unchecked):", JSON.stringify(live), "(want empty)");
+    return live === "";
   });
+  allPass = allPass && s2.result && !s2.errors.length;
 
   // Scenario 3: check the box FIRST, then type the numbers.
   const s3 = await run("check-then-type", async (page) => {
@@ -78,11 +72,11 @@ async function run(label, fn) {
     await page.click("#timer-skip").catch(() => {});
     await set.locator('input[data-field="weight"]').pressSequentially("40", { delay: 40 });
     await set.locator('input[data-field="reps"]').pressSequentially("10", { delay: 40 });
+    await page.waitForTimeout(120);
+    const total = (await page.locator("#workout-tonnage").textContent()).trim();
+    console.log("  live total (check-first):", JSON.stringify(total), "(want 400)");
     await page.click("#finish-workout");
     await page.waitForSelector("#view-home.active");
-    await page.waitForTimeout(150);
-    const total = await page.locator(".tonnage-value").textContent().catch(() => "(no card)");
-    console.log("  home total (check-first):", total, "(want 400 kg)");
     return /400/.test(total);
   });
   allPass = allPass && s3.result && !s3.errors.length;

@@ -39,23 +39,24 @@ const URL = "http://127.0.0.1:8765/index.html";
   await page.click("#timer-skip").catch(() => {});
   await page.waitForTimeout(150);
 
+  // Live total during the session = 5*12 + 4*10 = 100
+  const liveTotal = (await page.locator("#workout-tonnage").textContent()).trim();
+  console.log("live total:", JSON.stringify(liveTotal), "(want contains 100)");
+
   // Finish.
   await page.click("#finish-workout");
   await page.waitForSelector("#view-home.active");
   await page.waitForTimeout(150);
 
-  // Tonnage = 5*12 + 4*10 = 100
-  const homeTotal = await page.locator(".tonnage-value").textContent();
-  console.log("home total:", homeTotal, "(want 100 kg)");
-
-  // Calendar shows L/R summary
+  // Calendar shows L/R summary + per-session tonnage (dashboard card removed).
   await page.click("#open-calendar");
   await page.click(".calendar-day.has-workout");
   await page.waitForSelector(".calendar-session");
   const detail = await page.locator(".calendar-session-ex-sets").first().textContent();
-  console.log("calendar set detail:", JSON.stringify(detail.trim()));
+  const calTon = await page.locator(".calendar-session-tonnage").first().textContent();
+  console.log("calendar set detail:", JSON.stringify(detail.trim()), "tonnage:", calTon);
 
-  const pass = hasToggle === 1 && homeTotal.includes("100") &&
+  const pass = hasToggle === 1 && /100/.test(liveTotal) && calTon.includes("100") &&
                /L 5×12/.test(detail) && /R 4×10/.test(detail);
   console.log("RESULT:", pass ? "PASS" : "FAIL");
 

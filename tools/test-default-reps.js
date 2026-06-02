@@ -38,14 +38,17 @@ const URL = "http://127.0.0.1:8765/index.html";
   const live = (await page.locator("#workout-tonnage").textContent()).trim();
   console.log("live total:", JSON.stringify(live), "(want contains 1.400)");
 
-  // Finish and confirm it persists to the home total.
+  // Finish and confirm it persists into the calendar (dashboard card removed).
   await page.click("#finish-workout");
   await page.waitForSelector("#view-home.active");
   await page.waitForTimeout(150);
-  const home = await page.locator(".tonnage-value").textContent().catch(() => "(no card)");
-  console.log("home total:", home, "(want 1.400 kg)");
+  await page.click("#open-calendar");
+  await page.click(".calendar-day.has-workout");
+  await page.waitForSelector(".calendar-session");
+  const calTon = await page.locator(".calendar-session-tonnage").first().textContent();
+  console.log("calendar tonnage:", calTon, "(want 1.400 kg)");
 
-  const pass = repsPrefill === "10" && /1\.400/.test(live) && /1\.400/.test(home);
+  const pass = repsPrefill === "10" && /1\.400/.test(live) && /1\.400/.test(calTon);
   console.log("RESULT:", pass ? "PASS" : "FAIL");
 
   await browser.close();

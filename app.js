@@ -210,9 +210,6 @@
     const vals = [set.weight, set.weightL, set.weightR].map(num).filter(Number.isFinite);
     return vals.length ? Math.max(...vals) : NaN;
   }
-  function totalTonnage() {
-    return loadHistory().reduce((sum, s) => sum + sessionTonnage(s), 0);
-  }
   function formatKg(n) {
     const rounded = Math.round(n);
     return rounded.toLocaleString("de-DE");
@@ -254,19 +251,6 @@
       card.addEventListener("click", () => startWorkout(key));
       grid.appendChild(card);
     });
-    renderTonnageCard();
-  }
-
-  function renderTonnageCard() {
-    const host = $("#home-tonnage");
-    if (!host) return;
-    const t = totalTonnage();
-    if (t <= 0) { host.innerHTML = ""; host.classList.add("hidden"); return; }
-    host.classList.remove("hidden");
-    host.innerHTML = `
-      <span class="tonnage-label">Insgesamt bewegt</span>
-      <span class="tonnage-value">${formatKg(t)} kg</span>
-    `;
   }
 
   // Baut einen Übungs-Eintrag fürs laufende Workout. `spec` liefert sets/reps/rest

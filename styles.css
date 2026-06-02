@@ -692,31 +692,6 @@ h1, h2, h3 {
 }
 .exercise-svg svg { animation: pulse-svg 3s ease-in-out infinite; }
 
-/* Tonnage-Karte auf Home */
-.tonnage-card.hidden { display: none; }
-.tonnage-card {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 14px 18px;
-  margin: 0 0 18px;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  border: 1px solid rgba(154, 140, 152, 0.12);
-}
-.tonnage-label {
-  font-size: 12px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-.tonnage-value {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-
 /* PR-Badge */
 .pr-badge {
   display: inline-block;
