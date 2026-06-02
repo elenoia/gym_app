@@ -119,11 +119,15 @@
   }
 
   // Minimal-Escape für Text, der in HTML/Textarea landet.
+  // Escape für Text UND Attribut-Kontexte (deckt auch Quotes ab). Wichtig für
+  // alles, was aus dem Speicher/Import stammt und per innerHTML gerendert wird.
   function escapeHtml(s) {
     return String(s)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function getLastSessionForDay(day) {
@@ -196,13 +200,18 @@
     const unilateral = set.unilateral ?? (exMeta ? exMeta.unilateral : false);
     return unilateral ? base * 2 : base;
   }
-  function sessionTonnage(session) {
+  // Summiert die Tonnage über eine Übungsliste — geteilt von gespeicherter
+  // Session (sessionTonnage) und laufendem Workout (currentWorkoutTonnage).
+  function tonnageOf(exercises) {
     let t = 0;
-    for (const ex of session.exercises) {
+    for (const ex of exercises) {
       const exMeta = EXERCISES[ex.id];
       for (const s of ex.sets) t += setVolume(s, exMeta);
     }
     return t;
+  }
+  function sessionTonnage(session) {
+    return tonnageOf(session.exercises);
   }
   // Repräsentatives „schwerstes" Gewicht eines Satzes — für PR-Badges, Vorgaben
   // und Mini-Verlauf. Berücksichtigt gemeinsame und getrennte (L/R) Werte.
@@ -637,16 +646,9 @@
     updateLiveTonnage();
   }
 
-  // Live mitlaufende Tonnage der laufenden Session (gleiche Formel wie sessionTonnage,
-  // nur auf den noch nicht gespeicherten Workout-State angewandt).
+  // Live mitlaufende Tonnage der laufenden Session (noch nicht gespeicherter State).
   function currentWorkoutTonnage() {
-    if (!state.workout) return 0;
-    let t = 0;
-    for (const ex of state.workout.exercises) {
-      const exMeta = EXERCISES[ex.id];
-      for (const s of ex.sets) t += setVolume(s, exMeta);
-    }
-    return t;
+    return state.workout ? tonnageOf(state.workout.exercises) : 0;
   }
   function updateLiveTonnage() {
     const el = $("#workout-tonnage");
@@ -869,7 +871,17 @@
     overlay.addEventListener("click", dismiss);
   }
 
-  // ─── Bottom Sheet (Confirm-Ersatz) ───────────────────
+  // ─── Bottom Sheets / Dialoge ─────────────────────────
+  // Gemeinsames Auf-/Zuklapp-Verhalten (Klasse + 220ms-Abblende) für alle Sheets.
+  function openSheet(el) {
+    el.classList.remove("hidden");
+    requestAnimationFrame(() => el.classList.add("visible"));
+  }
+  function closeSheet(el) {
+    el.classList.remove("visible");
+    setTimeout(() => el.classList.add("hidden"), 220);
+  }
+
   function confirmSheet({ title, message, confirmLabel = "OK", cancelLabel = "Abbrechen", danger = false }) {
     return new Promise((resolve) => {
       const sheet = $("#sheet");
@@ -883,14 +895,14 @@
       msgEl.textContent = message || "";
       okBtn.textContent = confirmLabel;
       cancelBtn.textContent = cancelLabel;
+      // Info-Sheets ohne Abbrechen-Label: leeren Button ausblenden.
+      cancelBtn.style.display = cancelLabel ? "" : "none";
       okBtn.classList.toggle("danger", !!danger);
 
-      sheet.classList.remove("hidden");
-      requestAnimationFrame(() => sheet.classList.add("visible"));
+      openSheet(sheet);
 
       function close(result) {
-        sheet.classList.remove("visible");
-        setTimeout(() => sheet.classList.add("hidden"), 220);
+        closeSheet(sheet);
         okBtn.removeEventListener("click", onOk);
         cancelBtn.removeEventListener("click", onCancel);
         sheet.removeEventListener("click", onBackdrop);
@@ -918,16 +930,14 @@
       const cancelBtn = $("#picker-cancel");
       list.innerHTML = items.map((it, i) => `
         <button class="picker-option" data-idx="${i}">
-          <span class="picker-option-label">${it.label}</span>
-          ${it.sub ? `<span class="picker-option-sub">${it.sub}</span>` : ""}
+          <span class="picker-option-label">${escapeHtml(it.label)}</span>
+          ${it.sub ? `<span class="picker-option-sub">${escapeHtml(it.sub)}</span>` : ""}
         </button>`).join("");
 
-      sheet.classList.remove("hidden");
-      requestAnimationFrame(() => sheet.classList.add("visible"));
+      openSheet(sheet);
 
       function close(result) {
-        sheet.classList.remove("visible");
-        setTimeout(() => sheet.classList.add("hidden"), 220);
+        closeSheet(sheet);
         list.removeEventListener("click", onListClick);
         cancelBtn.removeEventListener("click", onCancel);
         sheet.removeEventListener("click", onBackdrop);
@@ -975,12 +985,14 @@
   }
 
   // Lesbare Satz-Zusammenfassung für den Kalender — beidseitig oder L/R-getrennt.
+  // Werte werden escaped, da sie (über Import) aus fremdem JSON stammen können.
   function formatSetSummary(s) {
+    const v = (x) => escapeHtml(x ?? "–");
     if (s.split || s.weightL != null || s.weightR != null || s.repsL != null || s.repsR != null) {
-      const side = (w, r) => `${w ?? "–"}×${r ?? "–"}`;
+      const side = (w, r) => `${v(w)}×${v(r)}`;
       return `L ${side(s.weightL, s.repsL)} · R ${side(s.weightR, s.repsR)}`;
     }
-    return `${s.weight ?? "–"} kg × ${s.reps ?? "–"}`;
+    return `${v(s.weight)} kg × ${v(s.reps)}`;
   }
 
   function groupHistoryByDay() {
@@ -1050,11 +1062,11 @@
     host.innerHTML = `<div class="calendar-session-date">${dateLabel}</div>` +
       sessions.map(session => {
         const day = PLAN[session.day];
-        const dayTitle = day ? day.title : session.day;
+        const dayTitle = escapeHtml(day ? day.title : session.day);
         const t = sessionTonnage(session);
         const exHtml = session.exercises.map(ex => {
           const meta = EXERCISES[ex.id];
-          const name = meta ? meta.name : ex.id;
+          const name = escapeHtml(meta ? meta.name : ex.id);
           const sets = ex.sets
             .filter(s => s.done)
             .map(formatSetSummary)
@@ -1070,7 +1082,7 @@
             <span class="calendar-session-day">${dayTitle}</span>
             <div class="calendar-session-head-right">
               <span class="calendar-session-tonnage">${formatKg(t)} kg</span>
-              <button class="calendar-session-delete" data-session-date="${session.date}" aria-label="Training löschen">
+              <button class="calendar-session-delete" data-session-date="${escapeHtml(session.date)}" aria-label="Training löschen">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
               </button>
             </div>
@@ -1128,17 +1140,13 @@
       await navigator.clipboard.writeText(json);
       await infoSheet({ title: "In Zwischenablage kopiert", message: "Speichere die Daten in Notizen, Mail oder einer Datei." });
     } catch {
-      const dlg = $("#export-dialog");
       $("#export-textarea").value = json;
-      dlg.classList.remove("hidden");
-      requestAnimationFrame(() => dlg.classList.add("visible"));
+      openSheet($("#export-dialog"));
     }
   }
 
   function hideSheetDialog(id) {
-    const dlg = $(id);
-    dlg.classList.remove("visible");
-    setTimeout(() => dlg.classList.add("hidden"), 220);
+    closeSheet($(id));
   }
 
   function importFromText(text) {
@@ -1183,10 +1191,8 @@
     try {
       text = await navigator.clipboard.readText();
     } catch {
-      const dlg = $("#import-dialog");
       $("#import-textarea").value = "";
-      dlg.classList.remove("hidden");
-      requestAnimationFrame(() => dlg.classList.add("visible"));
+      openSheet($("#import-dialog"));
       return;
     }
     await confirmAndImport(text);
