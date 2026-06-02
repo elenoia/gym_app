@@ -14,7 +14,7 @@ const URL = "http://127.0.0.1:8765/index.html";
   await page.reload({ waitUntil: "networkidle" });
 
   // Tag A, expand the cable-row exercise (kabelrudern) and read its default note.
-  await page.click("#day-grid .day-card:nth-child(1)");
+  await page.click('[data-day="A"]');
   await page.waitForSelector(".exercise");
   const exHandle = page.locator('.exercise:has(textarea[data-note-ex="kabelrudern"])');
   await exHandle.locator(".exercise-head").click();
@@ -28,7 +28,7 @@ const URL = "http://127.0.0.1:8765/index.html";
 
   // Reload, re-open, verify persistence.
   await page.reload({ waitUntil: "networkidle" });
-  await page.click("#day-grid .day-card:nth-child(1)");
+  await page.click('[data-day="A"]');
   await page.waitForSelector(".exercise");
   const exHandle2 = page.locator('.exercise:has(textarea[data-note-ex="kabelrudern"])');
   await exHandle2.locator(".exercise-head").click();

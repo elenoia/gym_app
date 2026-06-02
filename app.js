@@ -91,6 +91,29 @@
     calendar: $("#view-calendar")
   };
 
+  // ─── Inline-Icons (stroke-based, currentColor) ───────
+  const ICONS = {
+    back:  `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`,
+    chevR: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`,
+    chevD: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`,
+    check: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    plus:  `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+    minus: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+    swap:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 2 21 6 17 10"/><path d="M3 6h18"/><polyline points="7 14 3 18 7 22"/><path d="M21 18H3"/></svg>`,
+    skip:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>`,
+    trend: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>`,
+    info:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.8" r="0.4" fill="currentColor"/></svg>`,
+    play:  `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg>`,
+  };
+
+  // Mascot fürs Plan-Badge — nach Reihenfolge A/B/C/D, danach zyklisch.
+  const MASCOT_KEYS = ["A", "B", "C", "D"];
+  function mascotFor(idx) {
+    return (typeof MASCOTS !== "undefined" && MASCOTS[MASCOT_KEYS[idx % 4]]) || "";
+  }
+  // "Beine, Brust" → "Beine · Brust"
+  function dotted(s) { return String(s || "").replace(/\s*,\s*/g, " · "); }
+
   // ─── Settings ────────────────────────────────────────
   function loadSettings() {
     const defaults = { sound: true, vibration: true, defaultRest: 90 };
@@ -241,25 +264,84 @@
 
   // ─── Home rendern ────────────────────────────────────
   function renderHome() {
-    const grid = $("#day-grid");
-    grid.innerHTML = "";
-    Object.entries(PLAN).forEach(([key, day]) => {
-      const card = document.createElement("button");
-      card.className = "day-card";
-      card.innerHTML = `
-        <div class="day-card-content">
-          <span class="day-card-letter">${key}</span>
-          <h3>${day.title}</h3>
-          <p>${day.subtitle}</p>
-          <p class="last-done">${formatLastDone(key)}</p>
-        </div>
-        <div class="day-card-arrow">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </div>
-      `;
-      card.addEventListener("click", () => startWorkout(key));
-      grid.appendChild(card);
-    });
+    // Datums-Overline
+    const now = new Date();
+    const dateEl = $("#home-date");
+    if (dateEl) {
+      const wd = now.toLocaleDateString("de-DE", { weekday: "long" });
+      const dm = now.toLocaleDateString("de-DE", { day: "numeric", month: "long" });
+      dateEl.textContent = `${wd.charAt(0).toUpperCase()}${wd.slice(1)} · ${dm}`;
+    }
+
+    const keys = Object.keys(PLAN);
+    const todayKey = keys[0];
+    const today = PLAN[todayKey];
+
+    // „Heute dran"-Karte
+    const todayHost = $("#home-today");
+    todayHost.innerHTML = `
+      <p class="section-label">Heute dran</p>
+      <button class="today-card" data-day="${todayKey}">
+        <span class="today-top">
+          <span class="today-mascot">${mascotFor(0)}</span>
+          <span class="today-main">
+            <span class="today-name">${escapeHtml(today.title)}</span>
+            <span class="today-muscles">${escapeHtml(dotted(today.subtitle))}</span>
+          </span>
+        </span>
+        <span class="today-foot">
+          <span class="today-meta">${today.exercises.length} Übungen · ${escapeHtml(formatLastDone(todayKey))}</span>
+          <span class="today-go">${ICONS.play} Start</span>
+        </span>
+      </button>`;
+    todayHost.querySelector(".today-card").addEventListener("click", () => startWorkout(todayKey));
+
+    // Recap der letzten Einheit
+    renderRecap();
+
+    // Weitere Pläne
+    const plansHost = $("#home-plans");
+    plansHost.innerHTML = `
+      <p class="section-label rest-label-sec">Weitere Pläne</p>
+      <div class="day-list">
+        ${keys.slice(1).map((k, i) => `
+          <button class="day-card" data-day="${k}">
+            <span class="day-badge">${mascotFor(i + 1)}</span>
+            <span class="day-main">
+              <span class="day-name">${escapeHtml(PLAN[k].title)}</span>
+              <span class="day-muscles">${escapeHtml(dotted(PLAN[k].subtitle))}</span>
+            </span>
+            <span class="day-last">${escapeHtml(formatLastDone(k))}</span>
+            <span class="day-chev">${ICONS.chevR}</span>
+          </button>`).join("")}
+      </div>`;
+    plansHost.querySelectorAll(".day-card").forEach(btn =>
+      btn.addEventListener("click", () => startWorkout(btn.dataset.day)));
+  }
+
+  // Schlanke Recap-Leiste: Kennzahlen der zuletzt abgeschlossenen Einheit.
+  function renderRecap() {
+    const host = $("#home-recap");
+    if (!host) return;
+    const history = loadHistory();
+    if (!history.length) { host.innerHTML = ""; return; }
+    const last = history[history.length - 1];
+    const dayName = PLAN[last.day] ? PLAN[last.day].title : last.day;
+    let setsDone = 0;
+    const exIds = new Set();
+    for (const ex of last.exercises) {
+      for (const s of ex.sets) if (s.done) { setsDone++; exIds.add(ex.id); }
+    }
+    const cells = [
+      { n: String(setsDone),            l: "Sätze" },
+      { n: String(exIds.size),          l: "Übungen" },
+      { n: formatKg(sessionTonnage(last)), l: "kg bewegt" },
+    ];
+    host.innerHTML = `
+      <p class="section-label rest-label-sec">Letztes Training · ${escapeHtml(dayName)}</p>
+      <div class="recap">
+        ${cells.map(c => `<div class="recap-cell"><span class="recap-n">${escapeHtml(c.n)}</span><span class="recap-l">${escapeHtml(c.l)}</span></div>`).join("")}
+      </div>`;
   }
 
   // Baut einen Übungs-Eintrag fürs laufende Workout. `spec` liefert sets/reps/rest

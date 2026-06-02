@@ -67,3 +67,37 @@ const PLAN = {
     ]
   }
 };
+
+// Verspielte Strichfiguren-Mascots für die Plan-Badges (Redesign „Atelier").
+// In currentColor gezeichnet → erben die Akzentfarbe vom Container.
+const MASCOTS = {
+  // A — Doppel-Bizeps-Pose
+  A: `<svg viewBox="0 0 40 40"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="20" cy="9" r="4" fill="currentColor" stroke="none"/>
+    <line x1="20" y1="13" x2="20" y2="26"/>
+    <path d="M20 17 L13 16 L11 11"/><path d="M20 17 L27 16 L29 11"/>
+    <line x1="20" y1="26" x2="14" y2="34"/><line x1="20" y1="26" x2="26" y2="34"/>
+  </g></svg>`,
+  // B — Kniebeuge unter der Hantel
+  B: `<svg viewBox="0 0 40 40"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="9" y1="9" x2="31" y2="9"/><circle cx="9" cy="9" r="2.2" fill="currentColor" stroke="none"/><circle cx="31" cy="9" r="2.2" fill="currentColor" stroke="none"/>
+    <circle cx="20" cy="15" r="3.4" fill="currentColor" stroke="none"/>
+    <line x1="20" y1="18" x2="20" y2="25"/>
+    <line x1="14" y1="11" x2="20" y2="20"/><line x1="26" y1="11" x2="20" y2="20"/>
+    <path d="M20 25 L14 28 L17 34"/><path d="M20 25 L26 28 L23 34"/>
+  </g></svg>`,
+  // C — Hampelmann
+  C: `<svg viewBox="0 0 40 40"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="20" cy="10" r="4" fill="currentColor" stroke="none"/>
+    <line x1="20" y1="14" x2="20" y2="24"/>
+    <line x1="20" y1="17" x2="10" y2="11"/><line x1="20" y1="17" x2="30" y2="11"/>
+    <line x1="20" y1="24" x2="12" y2="33"/><line x1="20" y1="24" x2="28" y2="33"/>
+  </g></svg>`,
+  // D — Streck-/Siegerpose
+  D: `<svg viewBox="0 0 40 40"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="20" cy="10" r="4" fill="currentColor" stroke="none"/>
+    <line x1="20" y1="14" x2="20" y2="27"/>
+    <path d="M20 18 L14 13 L15 8"/><path d="M20 18 L26 16 L31 18"/>
+    <line x1="20" y1="27" x2="14" y2="34"/><line x1="20" y1="27" x2="26" y2="34"/>
+  </g></svg>`
+};

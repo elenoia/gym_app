@@ -15,7 +15,7 @@ const URL = "http://127.0.0.1:8765/index.html";
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: "networkidle" });
 
-  await page.click("#day-grid .day-card:nth-child(1)"); // Tag A → Beinpresse first
+  await page.click('[data-day="A"]'); // Tag A → Beinpresse first
   await page.waitForSelector(".exercise");
   const ex = page.locator(".exercise").first();
   await ex.locator(".exercise-head").click();

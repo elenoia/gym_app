@@ -14,7 +14,7 @@ const URL = "http://127.0.0.1:8765/index.html";
   await page.reload({ waitUntil: "networkidle" });
 
   // Tag A → open face_pulls (unilateral).
-  await page.click("#day-grid .day-card:nth-child(1)");
+  await page.click('[data-day="A"]');
   await page.waitForSelector(".exercise");
   const ex = page.locator('.exercise:has(textarea[data-note-ex="face_pulls"])');
   await ex.locator(".exercise-head").click();

@@ -24,7 +24,7 @@ async function run(label, fn) {
 
   // Scenario 1: type weight+reps like a human, check, finish, read total.
   const s1 = await run("type+check", async (page) => {
-    await page.click("#day-grid .day-card:nth-child(1)"); // Tag A
+    await page.click('[data-day="A"]'); // Tag A
     await page.waitForSelector(".exercise");
     const ex = page.locator(".exercise").first();
     await ex.locator(".exercise-head").click();
@@ -45,7 +45,7 @@ async function run(label, fn) {
 
   // Scenario 2: enter values but FORGET to check the box, then finish.
   const s2 = await run("no-check", async (page) => {
-    await page.click("#day-grid .day-card:nth-child(1)");
+    await page.click('[data-day="A"]');
     await page.waitForSelector(".exercise");
     const ex = page.locator(".exercise").first();
     await ex.locator(".exercise-head").click();
@@ -62,7 +62,7 @@ async function run(label, fn) {
 
   // Scenario 3: check the box FIRST, then type the numbers.
   const s3 = await run("check-then-type", async (page) => {
-    await page.click("#day-grid .day-card:nth-child(1)");
+    await page.click('[data-day="A"]');
     await page.waitForSelector(".exercise");
     const ex = page.locator(".exercise").first();
     await ex.locator(".exercise-head").click();

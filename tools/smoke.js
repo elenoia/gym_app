@@ -27,7 +27,7 @@ const waitVisible = (page, selector) =>
   page.on("console", (m) => { if (m.type() === "error") errors.push("[console.error] " + m.text()); });
 
   await page.goto(URL, { waitUntil: "networkidle" });
-  await page.waitForSelector("#day-grid .day-card");
+  await page.waitForSelector('[data-day]');
   await shot(page, "01-home");
 
   // Settings
@@ -38,7 +38,7 @@ const waitVisible = (page, selector) =>
   await page.waitForSelector("#view-home.active");
 
   // Tag A
-  await page.click("#day-grid .day-card:nth-child(1)");
+  await page.click('[data-day="A"]');
   await page.waitForSelector("#view-workout.active");
   await page.waitForSelector(".exercise"); // exercise list rendered
   // Workouts starten jetzt mit aufgeklapptem Warmup, alle Übungen zu — selbst öffnen
@@ -98,8 +98,8 @@ const waitVisible = (page, selector) =>
 
   // Reload and verify persistence
   await page.reload({ waitUntil: "networkidle" });
-  await page.waitForSelector(".day-card");
-  const todayText = await page.locator(".day-card").first().locator(".last-done").textContent();
+  await page.waitForSelector('[data-day="A"]');
+  const todayText = await page.locator('[data-day="A"] .today-meta').textContent();
   console.log("Tag A last-done after reload:", todayText);
 
   // Settings → input font size & defaults

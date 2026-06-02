@@ -1,20 +1,38 @@
 :root {
-  /* Coolors-Palette */
-  --bg: #22223B;
-  --surface: #2C2E4A;
-  --surface-2: #4A4E69;
-  --muted: #9A8C98;
-  --accent: #C9ADA7;
-  --accent-strong: #DCC4BE;
+  /* ── Atelier-Tokens (Redesign) ───────────────────────────── */
+  /* Flächen */
+  --bg: #1B1B2E;
+  --surface: #252540;
+  --surface-2: #31314F;
+  --line: rgba(242, 233, 228, 0.09);
+
+  /* Text */
   --text: #F2E9E4;
-  --text-dim: #C9ADA7;
+  --dim: #C0AFBA;
+  --muted: #8B8298;
+
+  /* Akzent (warmes Clay) */
+  --accent: #D89D8E;
+  --on-accent: #26161A;
+  --accent-soft: rgba(216, 157, 142, 0.15);
+  --accent-line: rgba(216, 157, 142, 0.32);
+
+  /* Radien */
+  --r: 22px;
+  --r-sm: 15px;
+  --r-xs: 11px;
+
+  /* Typo */
+  --ui: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  /* ── Alias / Bestand (bis alle Screens umgebaut sind) ────── */
+  --text-dim: var(--dim);
+  --accent-strong: #E3B4A6;
   --danger: #E5A8A1;
-
-  --radius: 14px;
-  --radius-lg: 20px;
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-
-  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  --radius: var(--r-sm);
+  --radius-lg: var(--r);
+  --shadow: none;
+  --font: var(--ui);
 }
 
 * {
@@ -77,55 +95,65 @@ h1, h2, h3 {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Home */
-.home-header { padding: 30px 4px 36px; }
-.home-header h1 { font-size: 30px; font-weight: 600; }
-.home-header .subtitle { margin: 6px 0 0; color: var(--text-dim); font-size: 16px; }
+/* ── Geteilte Bausteine (Atelier) ── */
+.ovl { font-size: 11px; font-weight: 600; color: var(--dim); letter-spacing: .02em; margin: 0; display: inline-block; white-space: nowrap; }
+.section-label { font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 0 2px 11px; }
+.rest-label-sec { margin-top: 22px; }
 
-.day-grid { display: flex; flex-direction: column; gap: 14px; }
+.iconbtn {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--surface); color: var(--dim);
+  display: grid; place-items: center; flex: 0 0 auto;
+  transition: background .18s, color .18s;
+}
+.iconbtn:active { background: var(--surface-2); color: var(--text); }
+.iconbtn.ghost { background: transparent; }
+.iconbtn.ghost:active { background: var(--surface); }
 
+.mascot, .mascot svg { display: block; width: 100%; height: 100%; }
+.figure, .figure svg { display: block; width: 100%; height: 100%; }
+
+/* ── Home ── */
+.home-head { padding: 8px 0 18px; }
+.hh-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.hh-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.greeting { margin: 5px 0 0; font-weight: 600; font-size: 30px; letter-spacing: -0.02em; white-space: nowrap; }
+
+.today-card {
+  display: flex; flex-direction: column; gap: 15px; width: 100%; text-align: left;
+  background: var(--surface); border: 1px solid var(--accent-line); border-radius: var(--r);
+  padding: 17px 17px 16px; margin-bottom: 8px;
+  transition: transform .14s, background .14s;
+}
+.today-card:active { transform: scale(0.99); }
+.today-top { display: flex; align-items: center; gap: 15px; }
+.today-mascot { width: 54px; height: 54px; flex: 0 0 auto; border-radius: 16px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; padding: 9px; }
+.today-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.today-name { font-size: 21px; font-weight: 600; letter-spacing: -0.01em; }
+.today-muscles { font-size: 13px; color: var(--dim); }
+.today-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.today-meta { font-size: 11.5px; color: var(--muted); }
+.today-go { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--on-accent); background: var(--accent); padding: 9px 17px; border-radius: var(--r-xs); }
+
+.recap { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; }
+.recap-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 15px 4px; position: relative; }
+.recap-cell + .recap-cell::before { content: ''; position: absolute; left: 0; top: 24%; height: 52%; width: 1px; background: var(--line); }
+.recap-n { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.recap-l { font-size: 10.5px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+
+.day-list { display: flex; flex-direction: column; gap: 10px; }
 .day-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 22px;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: transform 0.15s ease, background 0.15s ease;
-  box-shadow: var(--shadow);
+  display: flex; align-items: center; gap: 14px; width: 100%;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: 13px 14px; text-align: left; transition: transform .14s, background .14s;
 }
-.day-card:active { transform: scale(0.98); background: var(--surface-2); }
-.day-card-content h3 { font-size: 22px; margin-bottom: 4px; }
-.day-card-content p  { margin: 0; font-size: 14px; color: var(--text-dim); }
-.day-card-content .last-done { font-size: 12px; color: var(--muted); margin-top: 6px; }
-.day-card-letter {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  color: var(--muted);
-  margin-bottom: 4px;
-  text-transform: uppercase;
-}
-.day-card-arrow { color: var(--accent); flex-shrink: 0; }
-
-.home-actions {
-  position: fixed;
-  top: calc(env(safe-area-inset-top) + 16px);
-  right: 18px;
-  display: flex;
-  gap: 8px;
-  z-index: 10;
-}
-.icon-action-btn {
-  width: 40px; height: 40px;
-  border-radius: 20px;
-  background: var(--surface);
-  color: var(--text-dim);
-  display: grid; place-items: center;
-}
-.icon-action-btn:active { background: var(--surface-2); }
+.day-card:active { transform: scale(0.985); background: var(--surface-2); }
+.day-badge { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 12px; display: grid; place-items: center; padding: 7px; color: var(--accent); background: var(--accent-soft); }
+.day-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.day-name { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.day-muscles { font-size: 12px; color: var(--dim); }
+.day-last { font-size: 11px; color: var(--muted); flex: 0 0 auto; white-space: nowrap; }
+.day-chev { color: var(--muted); flex: 0 0 auto; margin-left: -4px; display: grid; place-items: center; }
 
 /* Header (Workout, Settings) */
 .workout-header {

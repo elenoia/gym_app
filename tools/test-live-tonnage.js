@@ -16,7 +16,7 @@ const liveText = (page) => page.locator("#workout-tonnage").textContent();
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: "networkidle" });
 
-  await page.click("#day-grid .day-card:nth-child(1)"); // Tag A
+  await page.click('[data-day="A"]'); // Tag A
   await page.waitForSelector(".exercise");
   const ex = page.locator(".exercise").first();
   await ex.locator(".exercise-head").click();

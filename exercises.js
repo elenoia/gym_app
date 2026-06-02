@@ -5,8 +5,8 @@
  * ~2-Sekunden-Schleifen zeigt. Stil:
  *   - viewBox 0 0 100 100, Maßstab am Container (CSS skaliert auf 72px).
  *   - Körper: Strich #F2E9E4, stroke-width 2.5.
- *   - Geräte: Strich #9A8C98 / Füllung #4A4E69.
- *   - Bewegte Last / Hand: Füllung #C9ADA7.
+ *   - Geräte: Strich #8B8298 / Füllung #3A3A5C.
+ *   - Bewegte Last / Hand: Füllung #D89D8E.
  *   - Kopf: gefüllte Akzentkreise.
  *   - Animationen: SMIL animate / animateTransform — kein JS.
  */
@@ -20,11 +20,11 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Rail -->
-        <line x1="8" y1="82" x2="92" y2="42" stroke="#9A8C98" stroke-width="1.6"/>
+        <line x1="8" y1="82" x2="92" y2="42" stroke="#8B8298" stroke-width="1.6"/>
         <!-- Backrest -->
-        <line x1="48" y1="60" x2="14" y2="76" stroke="#4A4E69" stroke-width="7"/>
+        <line x1="48" y1="60" x2="14" y2="76" stroke="#3A3A5C" stroke-width="7"/>
         <!-- Head -->
-        <circle cx="14" cy="74" r="5" fill="#C9ADA7"/>
+        <circle cx="14" cy="74" r="5" fill="#D89D8E"/>
         <!-- Torso on backrest -->
         <line x1="46" y1="58" x2="20" y2="71" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Hip joint marker -->
@@ -42,7 +42,7 @@ const EXERCISES = {
           <animate attributeName="y2" values="50;43;50" dur="2.2s" repeatCount="indefinite"/>
         </line>
         <!-- Footplate -->
-        <rect x="78" y="42" width="10" height="14" rx="1.5" fill="#C9ADA7">
+        <rect x="78" y="42" width="10" height="14" rx="1.5" fill="#D89D8E">
           <animate attributeName="x" values="78;88;78" dur="2.2s" repeatCount="indefinite"/>
           <animate attributeName="y" values="42;36;42" dur="2.2s" repeatCount="indefinite"/>
         </rect>
@@ -58,12 +58,12 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Bench legs -->
-        <line x1="20" y1="80" x2="20" y2="92" stroke="#9A8C98" stroke-width="1.5"/>
-        <line x1="70" y1="68" x2="70" y2="92" stroke="#9A8C98" stroke-width="1.5"/>
+        <line x1="20" y1="80" x2="20" y2="92" stroke="#8B8298" stroke-width="1.5"/>
+        <line x1="70" y1="68" x2="70" y2="92" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Bench surface, inclined -->
-        <line x1="14" y1="78" x2="80" y2="58" stroke="#4A4E69" stroke-width="7"/>
+        <line x1="14" y1="78" x2="80" y2="58" stroke="#3A3A5C" stroke-width="7"/>
         <!-- Head at upper end -->
-        <circle cx="80" cy="55" r="5" fill="#C9ADA7"/>
+        <circle cx="80" cy="55" r="5" fill="#D89D8E"/>
         <!-- Torso along bench -->
         <line x1="74" y1="58" x2="30" y2="72" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Hip mark -->
@@ -81,7 +81,7 @@ const EXERCISES = {
           <animate attributeName="y2" values="44;56;44" dur="2.2s" repeatCount="indefinite"/>
         </line>
         <!-- Dumbbells (move up = away from chest) -->
-        <rect x="55" y="32" width="14" height="6" rx="1.5" fill="#C9ADA7">
+        <rect x="55" y="32" width="14" height="6" rx="1.5" fill="#D89D8E">
           <animate attributeName="y" values="32;48;32" dur="2.2s" repeatCount="indefinite"/>
           <animate attributeName="x" values="55;55;55" dur="2.2s" repeatCount="indefinite"/>
         </rect>
@@ -97,24 +97,24 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Seat -->
-        <rect x="36" y="76" width="28" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <rect x="36" y="76" width="28" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Backrest -->
-        <line x1="50" y1="40" x2="50" y2="78" stroke="#4A4E69" stroke-width="6"/>
+        <line x1="50" y1="40" x2="50" y2="78" stroke="#3A3A5C" stroke-width="6"/>
         <!-- Machine arms / pads (pivot at shoulder ~ (38,50) and (62,50)) -->
         <g>
           <animateTransform attributeName="transform" type="rotate"
             values="-40 38 50;0 38 50;-40 38 50" dur="2.4s" repeatCount="indefinite"/>
-          <line x1="38" y1="50" x2="14" y2="50" stroke="#9A8C98" stroke-width="2"/>
-          <rect x="10" y="44" width="6" height="14" rx="1.5" fill="#C9ADA7"/>
+          <line x1="38" y1="50" x2="14" y2="50" stroke="#8B8298" stroke-width="2"/>
+          <rect x="10" y="44" width="6" height="14" rx="1.5" fill="#D89D8E"/>
         </g>
         <g>
           <animateTransform attributeName="transform" type="rotate"
             values="40 62 50;0 62 50;40 62 50" dur="2.4s" repeatCount="indefinite"/>
-          <line x1="62" y1="50" x2="86" y2="50" stroke="#9A8C98" stroke-width="2"/>
-          <rect x="84" y="44" width="6" height="14" rx="1.5" fill="#C9ADA7"/>
+          <line x1="62" y1="50" x2="86" y2="50" stroke="#8B8298" stroke-width="2"/>
+          <rect x="84" y="44" width="6" height="14" rx="1.5" fill="#D89D8E"/>
         </g>
         <!-- Head -->
-        <circle cx="50" cy="34" r="5" fill="#C9ADA7"/>
+        <circle cx="50" cy="34" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="50" y1="39" x2="50" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Legs forward -->
@@ -144,19 +144,19 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Frame top -->
-        <line x1="14" y1="10" x2="86" y2="10" stroke="#9A8C98" stroke-width="2"/>
+        <line x1="14" y1="10" x2="86" y2="10" stroke="#8B8298" stroke-width="2"/>
         <!-- Pulley wheel -->
-        <circle cx="50" cy="10" r="3" stroke="#9A8C98" stroke-width="1.5"/>
+        <circle cx="50" cy="10" r="3" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Cable to bar -->
-        <line x1="50" y1="13" x2="50" y2="32" stroke="#9A8C98" stroke-width="1.2">
+        <line x1="50" y1="13" x2="50" y2="32" stroke="#8B8298" stroke-width="1.2">
           <animate attributeName="y2" values="32;46;32" dur="2.4s" repeatCount="indefinite"/>
         </line>
         <!-- Pull-down bar (wide) -->
-        <rect x="22" y="30" width="56" height="5" rx="2" fill="#C9ADA7">
+        <rect x="22" y="30" width="56" height="5" rx="2" fill="#D89D8E">
           <animate attributeName="y" values="30;44;30" dur="2.4s" repeatCount="indefinite"/>
         </rect>
         <!-- Head -->
-        <circle cx="50" cy="60" r="5" fill="#C9ADA7"/>
+        <circle cx="50" cy="60" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="50" y1="65" x2="50" y2="82" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Legs (seated, knees angled) -->
@@ -182,11 +182,11 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Hip pad (45° wedge) -->
-        <rect x="32" y="55" width="26" height="8" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <rect x="32" y="55" width="26" height="8" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Vertical post -->
-        <line x1="45" y1="63" x2="45" y2="88" stroke="#9A8C98" stroke-width="1.5"/>
+        <line x1="45" y1="63" x2="45" y2="88" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Foot pads -->
-        <rect x="38" y="86" width="14" height="4" rx="1" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.2"/>
+        <rect x="38" y="86" width="14" height="4" rx="1" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.2"/>
         <!-- Legs straight down from hip pad -->
         <line x1="48" y1="62" x2="48" y2="85" stroke="#F2E9E4" stroke-width="2.5"/>
         <line x1="52" y1="62" x2="52" y2="85" stroke="#F2E9E4" stroke-width="2.5"/>
@@ -195,7 +195,7 @@ const EXERCISES = {
           <animateTransform attributeName="transform" type="rotate"
             values="40 45 58;-10 45 58;40 45 58" dur="2.6s" repeatCount="indefinite"/>
           <line x1="45" y1="58" x2="14" y2="38" stroke="#F2E9E4" stroke-width="2.5"/>
-          <circle cx="12" cy="36" r="5" fill="#C9ADA7"/>
+          <circle cx="12" cy="36" r="5" fill="#D89D8E"/>
           <!-- Arms folded forward -->
           <line x1="24" y1="46" x2="14" y2="42" stroke="#F2E9E4" stroke-width="2.5"/>
         </g>
@@ -211,20 +211,20 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Seat (horizontal) -->
-        <rect x="18" y="68" width="48" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <rect x="18" y="68" width="48" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Backrest stub -->
-        <line x1="66" y1="46" x2="66" y2="74" stroke="#4A4E69" stroke-width="6"/>
+        <line x1="66" y1="46" x2="66" y2="74" stroke="#3A3A5C" stroke-width="6"/>
         <!-- Legs forward -->
         <line x1="32" y1="68" x2="20" y2="84" stroke="#F2E9E4" stroke-width="2.5"/>
         <line x1="42" y1="68" x2="30" y2="84" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Chest pad (shoulder bar) -->
-        <line x1="48" y1="40" x2="68" y2="36" stroke="#C9ADA7" stroke-width="4" stroke-linecap="round"/>
+        <line x1="48" y1="40" x2="68" y2="36" stroke="#D89D8E" stroke-width="4" stroke-linecap="round"/>
         <!-- Torso group: crunches around hip (46, 66) -->
         <g>
           <animateTransform attributeName="transform" type="rotate"
             values="0 46 66;-26 46 66;0 46 66" dur="2.4s" repeatCount="indefinite"/>
           <line x1="46" y1="66" x2="46" y2="38" stroke="#F2E9E4" stroke-width="2.5"/>
-          <circle cx="46" cy="33" r="5" fill="#C9ADA7"/>
+          <circle cx="46" cy="33" r="5" fill="#D89D8E"/>
           <!-- Arms forward gripping pad -->
           <line x1="46" y1="44" x2="60" y2="42" stroke="#F2E9E4" stroke-width="2.5"/>
         </g>
@@ -240,11 +240,11 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Seat (horizontal) -->
-        <rect x="12" y="56" width="40" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <rect x="12" y="56" width="40" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Backrest -->
-        <line x1="14" y1="22" x2="14" y2="62" stroke="#4A4E69" stroke-width="6"/>
+        <line x1="14" y1="22" x2="14" y2="62" stroke="#3A3A5C" stroke-width="6"/>
         <!-- Head -->
-        <circle cx="14" cy="22" r="5" fill="#C9ADA7"/>
+        <circle cx="14" cy="22" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="14" y1="27" x2="14" y2="56" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Hip joint -->
@@ -259,7 +259,7 @@ const EXERCISES = {
             values="90 50 56;0 50 56;90 50 56" dur="2.3s" repeatCount="indefinite"/>
           <line x1="50" y1="56" x2="80" y2="56" stroke="#F2E9E4" stroke-width="2.5"/>
           <!-- Pad/weight at ankle -->
-          <circle cx="82" cy="56" r="5" fill="#C9ADA7"/>
+          <circle cx="82" cy="56" r="5" fill="#D89D8E"/>
         </g>
       </g>
     </svg>`
@@ -273,11 +273,11 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Seat -->
-        <rect x="12" y="50" width="40" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <rect x="12" y="50" width="40" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Backrest -->
-        <line x1="14" y1="18" x2="14" y2="56" stroke="#4A4E69" stroke-width="6"/>
+        <line x1="14" y1="18" x2="14" y2="56" stroke="#3A3A5C" stroke-width="6"/>
         <!-- Head -->
-        <circle cx="14" cy="18" r="5" fill="#C9ADA7"/>
+        <circle cx="14" cy="18" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="14" y1="23" x2="14" y2="50" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Hip / thigh -->
@@ -290,7 +290,7 @@ const EXERCISES = {
           <animateTransform attributeName="transform" type="rotate"
             values="0 50 50;135 50 50;0 50 50" dur="2.4s" repeatCount="indefinite"/>
           <line x1="50" y1="50" x2="80" y2="50" stroke="#F2E9E4" stroke-width="2.5"/>
-          <circle cx="82" cy="50" r="5" fill="#C9ADA7"/>
+          <circle cx="82" cy="50" r="5" fill="#D89D8E"/>
         </g>
       </g>
     </svg>`
@@ -304,11 +304,11 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Backrest -->
-        <line x1="32" y1="38" x2="32" y2="80" stroke="#4A4E69" stroke-width="6"/>
+        <line x1="32" y1="38" x2="32" y2="80" stroke="#3A3A5C" stroke-width="6"/>
         <!-- Seat -->
-        <rect x="32" y="76" width="26" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <rect x="32" y="76" width="26" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Head -->
-        <circle cx="42" cy="42" r="5" fill="#C9ADA7"/>
+        <circle cx="42" cy="42" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="42" y1="47" x2="42" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Legs -->
@@ -327,10 +327,10 @@ const EXERCISES = {
           <animate attributeName="x2" values="56;54;56" dur="2.2s" repeatCount="indefinite"/>
         </line>
         <!-- Dumbbells -->
-        <rect x="20" y="32" width="14" height="6" rx="1.5" fill="#C9ADA7">
+        <rect x="20" y="32" width="14" height="6" rx="1.5" fill="#D89D8E">
           <animate attributeName="y" values="32;52;32" dur="2.2s" repeatCount="indefinite"/>
         </rect>
-        <rect x="50" y="32" width="14" height="6" rx="1.5" fill="#C9ADA7">
+        <rect x="50" y="32" width="14" height="6" rx="1.5" fill="#D89D8E">
           <animate attributeName="y" values="32;52;32" dur="2.2s" repeatCount="indefinite"/>
         </rect>
       </g>
@@ -345,14 +345,14 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Floor / bench rail -->
-        <line x1="6" y1="68" x2="94" y2="68" stroke="#9A8C98" stroke-width="1.4"/>
+        <line x1="6" y1="68" x2="94" y2="68" stroke="#8B8298" stroke-width="1.4"/>
         <!-- Cable tower at right -->
-        <line x1="90" y1="20" x2="90" y2="68" stroke="#9A8C98" stroke-width="1.6"/>
-        <circle cx="90" cy="40" r="3" stroke="#9A8C98" stroke-width="1.4"/>
+        <line x1="90" y1="20" x2="90" y2="68" stroke="#8B8298" stroke-width="1.6"/>
+        <circle cx="90" cy="40" r="3" stroke="#8B8298" stroke-width="1.4"/>
         <!-- Foot platform -->
-        <rect x="68" y="66" width="20" height="6" rx="1.5" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.2"/>
+        <rect x="68" y="66" width="20" height="6" rx="1.5" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.2"/>
         <!-- Head -->
-        <circle cx="22" cy="36" r="5" fill="#C9ADA7"/>
+        <circle cx="22" cy="36" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="22" y1="41" x2="32" y2="66" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Legs (extended toward platform) -->
@@ -369,11 +369,11 @@ const EXERCISES = {
           <animate attributeName="x2" values="60;42;60" dur="2.4s" repeatCount="indefinite"/>
         </line>
         <!-- Handle -->
-        <circle cx="60" cy="50" r="3" fill="#C9ADA7">
+        <circle cx="60" cy="50" r="3" fill="#D89D8E">
           <animate attributeName="cx" values="60;42;60" dur="2.4s" repeatCount="indefinite"/>
         </circle>
         <!-- Cable to pulley (dashed) -->
-        <line x1="60" y1="50" x2="90" y2="40" stroke="#9A8C98" stroke-width="1.2" stroke-dasharray="2 2">
+        <line x1="60" y1="50" x2="90" y2="40" stroke="#8B8298" stroke-width="1.2" stroke-dasharray="2 2">
           <animate attributeName="x1" values="60;42;60" dur="2.4s" repeatCount="indefinite"/>
         </line>
       </g>
@@ -388,9 +388,9 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Floor -->
-        <line x1="20" y1="94" x2="80" y2="94" stroke="#9A8C98" stroke-width="1.2"/>
+        <line x1="20" y1="94" x2="80" y2="94" stroke="#8B8298" stroke-width="1.2"/>
         <!-- Head -->
-        <circle cx="50" cy="20" r="5" fill="#C9ADA7"/>
+        <circle cx="50" cy="20" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="50" y1="25" x2="50" y2="62" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Legs -->
@@ -409,11 +409,11 @@ const EXERCISES = {
           <animate attributeName="x2" values="60;56;60" dur="2.2s" repeatCount="indefinite"/>
         </line>
         <!-- Dumbbells -->
-        <rect x="33" y="71" width="14" height="6" rx="1.5" fill="#C9ADA7">
+        <rect x="33" y="71" width="14" height="6" rx="1.5" fill="#D89D8E">
           <animate attributeName="y" values="71;33;71" dur="2.2s" repeatCount="indefinite"/>
           <animate attributeName="x" values="33;37;33" dur="2.2s" repeatCount="indefinite"/>
         </rect>
-        <rect x="53" y="71" width="14" height="6" rx="1.5" fill="#C9ADA7">
+        <rect x="53" y="71" width="14" height="6" rx="1.5" fill="#D89D8E">
           <animate attributeName="y" values="71;33;71" dur="2.2s" repeatCount="indefinite"/>
           <animate attributeName="x" values="53;49;53" dur="2.2s" repeatCount="indefinite"/>
         </rect>
@@ -429,19 +429,19 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Cable tower top -->
-        <line x1="20" y1="8" x2="80" y2="8" stroke="#9A8C98" stroke-width="2"/>
+        <line x1="20" y1="8" x2="80" y2="8" stroke="#8B8298" stroke-width="2"/>
         <!-- Pulley -->
-        <circle cx="50" cy="8" r="3" stroke="#9A8C98" stroke-width="1.5"/>
+        <circle cx="50" cy="8" r="3" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Cable down to handle -->
-        <line x1="50" y1="11" x2="50" y2="40" stroke="#9A8C98" stroke-width="1.2">
+        <line x1="50" y1="11" x2="50" y2="40" stroke="#8B8298" stroke-width="1.2">
           <animate attributeName="y2" values="40;58;40" dur="2.2s" repeatCount="indefinite"/>
         </line>
         <!-- Handle (rope bar) -->
-        <rect x="42" y="38" width="16" height="5" rx="1.5" fill="#C9ADA7">
+        <rect x="42" y="38" width="16" height="5" rx="1.5" fill="#D89D8E">
           <animate attributeName="y" values="38;56;38" dur="2.2s" repeatCount="indefinite"/>
         </rect>
         <!-- Head -->
-        <circle cx="50" cy="52" r="5" fill="#C9ADA7"/>
+        <circle cx="50" cy="52" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="50" y1="57" x2="50" y2="80" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Legs -->
@@ -469,17 +469,17 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Floor -->
-        <line x1="6" y1="94" x2="94" y2="94" stroke="#9A8C98" stroke-width="1.2"/>
+        <line x1="6" y1="94" x2="94" y2="94" stroke="#8B8298" stroke-width="1.2"/>
         <!-- Bench: pad on legs -->
-        <rect x="6" y="40" width="30" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
-        <line x1="10" y1="46" x2="10" y2="74" stroke="#9A8C98" stroke-width="1.5"/>
-        <line x1="32" y1="46" x2="32" y2="74" stroke="#9A8C98" stroke-width="1.5"/>
+        <rect x="6" y="40" width="30" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
+        <line x1="10" y1="46" x2="10" y2="74" stroke="#8B8298" stroke-width="1.5"/>
+        <line x1="32" y1="46" x2="32" y2="74" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Barbell across hips -->
-        <rect x="44" y="56" width="22" height="6" rx="1.5" fill="#C9ADA7">
+        <rect x="44" y="56" width="22" height="6" rx="1.5" fill="#D89D8E">
           <animate attributeName="y" values="56;42;56" dur="2.4s" repeatCount="indefinite"/>
         </rect>
         <!-- Head (rests on bench) -->
-        <circle cx="14" cy="38" r="5" fill="#C9ADA7"/>
+        <circle cx="14" cy="38" r="5" fill="#D89D8E"/>
         <!-- Body line: shoulder (20,42) → hip (~55, animated y) → knee (~70, 70) -->
         <line x1="20" y1="42" x2="55" y2="62" stroke="#F2E9E4" stroke-width="2.5">
           <animate attributeName="x2" values="55;55;55" dur="2.4s" repeatCount="indefinite"/>
@@ -504,12 +504,12 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Cable tower -->
-        <line x1="86" y1="14" x2="86" y2="44" stroke="#9A8C98" stroke-width="1.6"/>
-        <circle cx="86" cy="30" r="3" stroke="#9A8C98" stroke-width="1.4"/>
+        <line x1="86" y1="14" x2="86" y2="44" stroke="#8B8298" stroke-width="1.6"/>
+        <circle cx="86" cy="30" r="3" stroke="#8B8298" stroke-width="1.4"/>
         <!-- Floor -->
-        <line x1="14" y1="94" x2="80" y2="94" stroke="#9A8C98" stroke-width="1.2"/>
+        <line x1="14" y1="94" x2="80" y2="94" stroke="#8B8298" stroke-width="1.2"/>
         <!-- Head -->
-        <circle cx="34" cy="30" r="5" fill="#C9ADA7"/>
+        <circle cx="34" cy="30" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="34" y1="35" x2="34" y2="70" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Legs -->
@@ -536,7 +536,7 @@ const EXERCISES = {
           <animate attributeName="x2" values="44;38;44" dur="2.4s" repeatCount="indefinite"/>
         </line>
         <!-- Cable from pulley to hands -->
-        <line x1="86" y1="33" x2="44" y2="30" stroke="#9A8C98" stroke-width="1.2" stroke-dasharray="2 2">
+        <line x1="86" y1="33" x2="44" y2="30" stroke="#8B8298" stroke-width="1.2" stroke-dasharray="2 2">
           <animate attributeName="x2" values="44;38;44" dur="2.4s" repeatCount="indefinite"/>
           <animate attributeName="y2" values="30;30;30" dur="2.4s" repeatCount="indefinite"/>
         </line>
@@ -552,13 +552,13 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Floor -->
-        <line x1="6" y1="86" x2="94" y2="86" stroke="#9A8C98" stroke-width="1.2"/>
+        <line x1="6" y1="86" x2="94" y2="86" stroke="#8B8298" stroke-width="1.2"/>
         <!-- Body group moves down/up -->
         <g>
           <animateTransform attributeName="transform" type="translate"
             values="0 0;0 8;0 0" dur="2.2s" repeatCount="indefinite"/>
           <!-- Body line: shoulders to ankles, slight downhill -->
-          <circle cx="82" cy="52" r="5" fill="#C9ADA7"/>
+          <circle cx="82" cy="52" r="5" fill="#D89D8E"/>
           <line x1="78" y1="55" x2="20" y2="64" stroke="#F2E9E4" stroke-width="2.5"/>
           <!-- Arms (vertical from shoulders to floor) -->
           <line x1="74" y1="56" x2="68" y2="84" stroke="#F2E9E4" stroke-width="2.5"/>
@@ -579,18 +579,18 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Frame top -->
-        <line x1="14" y1="10" x2="86" y2="10" stroke="#9A8C98" stroke-width="2"/>
-        <circle cx="50" cy="10" r="3" stroke="#9A8C98" stroke-width="1.5"/>
+        <line x1="14" y1="10" x2="86" y2="10" stroke="#8B8298" stroke-width="2"/>
+        <circle cx="50" cy="10" r="3" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Cable -->
-        <line x1="50" y1="13" x2="50" y2="34" stroke="#9A8C98" stroke-width="1.2">
+        <line x1="50" y1="13" x2="50" y2="34" stroke="#8B8298" stroke-width="1.2">
           <animate attributeName="y2" values="34;48;34" dur="2.4s" repeatCount="indefinite"/>
         </line>
         <!-- Narrow bar -->
-        <rect x="40" y="32" width="20" height="5" rx="2" fill="#C9ADA7">
+        <rect x="40" y="32" width="20" height="5" rx="2" fill="#D89D8E">
           <animate attributeName="y" values="32;46;32" dur="2.4s" repeatCount="indefinite"/>
         </rect>
         <!-- Head -->
-        <circle cx="50" cy="62" r="5" fill="#C9ADA7"/>
+        <circle cx="50" cy="62" r="5" fill="#D89D8E"/>
         <!-- Torso (slight backward lean) -->
         <line x1="50" y1="67" x2="50" y2="84" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Legs -->
@@ -615,20 +615,20 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Floor -->
-        <line x1="6" y1="92" x2="94" y2="92" stroke="#9A8C98" stroke-width="1.2"/>
+        <line x1="6" y1="92" x2="94" y2="92" stroke="#8B8298" stroke-width="1.2"/>
         <!-- Pivot at floor right -->
-        <circle cx="86" cy="92" r="2.5" fill="#9A8C98"/>
+        <circle cx="86" cy="92" r="2.5" fill="#8B8298"/>
         <!-- T-bar lever (pivots at base) -->
         <g>
           <animateTransform attributeName="transform" type="rotate"
             values="-30 86 92;-50 86 92;-30 86 92" dur="2.4s" repeatCount="indefinite"/>
-          <line x1="86" y1="92" x2="24" y2="60" stroke="#C9ADA7" stroke-width="3"/>
+          <line x1="86" y1="92" x2="24" y2="60" stroke="#D89D8E" stroke-width="3"/>
           <!-- Plate stack -->
-          <circle cx="80" cy="88" r="5" stroke="#9A8C98" stroke-width="1.5" fill="#4A4E69"/>
+          <circle cx="80" cy="88" r="5" stroke="#8B8298" stroke-width="1.5" fill="#3A3A5C"/>
         </g>
         <!-- Person standing over bar, bent forward -->
         <!-- Head -->
-        <circle cx="32" cy="40" r="5" fill="#C9ADA7"/>
+        <circle cx="32" cy="40" r="5" fill="#D89D8E"/>
         <!-- Torso bent forward -->
         <line x1="34" y1="45" x2="50" y2="62" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Hip / Legs -->
@@ -654,11 +654,11 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Seat -->
-        <rect x="40" y="60" width="20" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <rect x="40" y="60" width="20" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Backrest -->
-        <line x1="50" y1="30" x2="50" y2="62" stroke="#4A4E69" stroke-width="6"/>
+        <line x1="50" y1="30" x2="50" y2="62" stroke="#3A3A5C" stroke-width="6"/>
         <!-- Head -->
-        <circle cx="50" cy="28" r="5" fill="#C9ADA7"/>
+        <circle cx="50" cy="28" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="50" y1="33" x2="50" y2="62" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Hip joint -->
@@ -668,14 +668,14 @@ const EXERCISES = {
           <animateTransform attributeName="transform" type="rotate"
             values="0 50 62;-22 50 62;0 50 62" dur="2.4s" repeatCount="indefinite"/>
           <line x1="50" y1="62" x2="40" y2="90" stroke="#F2E9E4" stroke-width="2.5"/>
-          <rect x="35" y="84" width="6" height="12" rx="1.5" fill="#C9ADA7"/>
+          <rect x="35" y="84" width="6" height="12" rx="1.5" fill="#D89D8E"/>
         </g>
         <!-- Right leg swings outward -->
         <g>
           <animateTransform attributeName="transform" type="rotate"
             values="0 50 62;22 50 62;0 50 62" dur="2.4s" repeatCount="indefinite"/>
           <line x1="50" y1="62" x2="60" y2="90" stroke="#F2E9E4" stroke-width="2.5"/>
-          <rect x="59" y="84" width="6" height="12" rx="1.5" fill="#C9ADA7"/>
+          <rect x="59" y="84" width="6" height="12" rx="1.5" fill="#D89D8E"/>
         </g>
       </g>
     </svg>`
@@ -689,11 +689,11 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Backrest -->
-        <line x1="28" y1="36" x2="28" y2="80" stroke="#4A4E69" stroke-width="6"/>
+        <line x1="28" y1="36" x2="28" y2="80" stroke="#3A3A5C" stroke-width="6"/>
         <!-- Seat -->
-        <rect x="28" y="76" width="24" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <rect x="28" y="76" width="24" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Head -->
-        <circle cx="38" cy="40" r="5" fill="#C9ADA7"/>
+        <circle cx="38" cy="40" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="38" y1="45" x2="38" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Legs -->
@@ -709,7 +709,7 @@ const EXERCISES = {
           <animate attributeName="x2" values="74;60;74" dur="2.3s" repeatCount="indefinite"/>
         </line>
         <!-- Handle / pad -->
-        <rect x="72" y="46" width="6" height="16" rx="1.5" fill="#C9ADA7">
+        <rect x="72" y="46" width="6" height="16" rx="1.5" fill="#D89D8E">
           <animate attributeName="x" values="72;58;72" dur="2.3s" repeatCount="indefinite"/>
         </rect>
       </g>
@@ -724,11 +724,11 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Backrest -->
-        <line x1="34" y1="40" x2="34" y2="80" stroke="#4A4E69" stroke-width="6"/>
+        <line x1="34" y1="40" x2="34" y2="80" stroke="#3A3A5C" stroke-width="6"/>
         <!-- Seat -->
-        <rect x="34" y="76" width="26" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <rect x="34" y="76" width="26" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Head -->
-        <circle cx="44" cy="42" r="5" fill="#C9ADA7"/>
+        <circle cx="44" cy="42" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="44" y1="47" x2="44" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Legs -->
@@ -745,10 +745,10 @@ const EXERCISES = {
           <animate attributeName="y2" values="28;46;28" dur="2.3s" repeatCount="indefinite"/>
         </line>
         <!-- Handles -->
-        <rect x="28" y="22" width="12" height="6" rx="1.5" fill="#C9ADA7">
+        <rect x="28" y="22" width="12" height="6" rx="1.5" fill="#D89D8E">
           <animate attributeName="y" values="22;40;22" dur="2.3s" repeatCount="indefinite"/>
         </rect>
-        <rect x="48" y="22" width="12" height="6" rx="1.5" fill="#C9ADA7">
+        <rect x="48" y="22" width="12" height="6" rx="1.5" fill="#D89D8E">
           <animate attributeName="y" values="22;40;22" dur="2.3s" repeatCount="indefinite"/>
         </rect>
       </g>
@@ -763,24 +763,24 @@ const EXERCISES = {
     svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
         <!-- Seat -->
-        <rect x="36" y="76" width="28" height="6" rx="2" fill="#4A4E69" stroke="#9A8C98" stroke-width="1.5"/>
+        <rect x="36" y="76" width="28" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
         <!-- Chest pad (faces pad) -->
-        <line x1="50" y1="40" x2="50" y2="74" stroke="#4A4E69" stroke-width="6"/>
+        <line x1="50" y1="40" x2="50" y2="74" stroke="#3A3A5C" stroke-width="6"/>
         <!-- Machine arms swing outward / back -->
         <g>
           <animateTransform attributeName="transform" type="rotate"
             values="0 38 50;-40 38 50;0 38 50" dur="2.4s" repeatCount="indefinite"/>
-          <line x1="38" y1="50" x2="14" y2="50" stroke="#9A8C98" stroke-width="2"/>
-          <rect x="10" y="44" width="6" height="14" rx="1.5" fill="#C9ADA7"/>
+          <line x1="38" y1="50" x2="14" y2="50" stroke="#8B8298" stroke-width="2"/>
+          <rect x="10" y="44" width="6" height="14" rx="1.5" fill="#D89D8E"/>
         </g>
         <g>
           <animateTransform attributeName="transform" type="rotate"
             values="0 62 50;40 62 50;0 62 50" dur="2.4s" repeatCount="indefinite"/>
-          <line x1="62" y1="50" x2="86" y2="50" stroke="#9A8C98" stroke-width="2"/>
-          <rect x="84" y="44" width="6" height="14" rx="1.5" fill="#C9ADA7"/>
+          <line x1="62" y1="50" x2="86" y2="50" stroke="#8B8298" stroke-width="2"/>
+          <rect x="84" y="44" width="6" height="14" rx="1.5" fill="#D89D8E"/>
         </g>
         <!-- Head -->
-        <circle cx="50" cy="34" r="5" fill="#C9ADA7"/>
+        <circle cx="50" cy="34" r="5" fill="#D89D8E"/>
         <!-- Torso -->
         <line x1="50" y1="39" x2="50" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
         <!-- Legs -->

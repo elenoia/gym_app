@@ -13,11 +13,11 @@ const URL = "http://127.0.0.1:8765/index.html";
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: "networkidle" });
 
-  // Feature 5: there should be a 4th card "M / Maschinen".
-  const cards = await page.locator("#day-grid .day-card").count();
+  // Feature 5: there should be 4 plans total (today-card A + B/C/M list).
+  const cards = await page.locator("[data-day]").count();
   console.log("day cards:", cards, "(want 4)");
-  const mCard = page.locator('#day-grid .day-card:has(.day-card-letter:text-is("M"))');
-  const mTitle = await mCard.locator("h3").textContent();
+  const mCard = page.locator('[data-day="M"]');
+  const mTitle = await mCard.locator(".day-name").textContent();
   console.log("machine plan title:", JSON.stringify(mTitle), '(want "Maschinen")');
 
   await mCard.click();
@@ -44,7 +44,7 @@ const URL = "http://127.0.0.1:8765/index.html";
   await page.click("#sheet-confirm").catch(() => {}); // confirm abort of empty session
   await page.waitForSelector("#view-home.active");
 
-  await page.click("#day-grid .day-card:nth-child(1)");
+  await page.click('[data-day="A"]');
   await page.waitForSelector(".exercise");
   const ex = page.locator('.exercise:has(textarea[data-note-ex="bankdruecken"])');
   await ex.locator(".exercise-head").click();
