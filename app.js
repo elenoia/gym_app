@@ -128,6 +128,30 @@
   function saveHistory(h)     { saveJSON("history", h); }
   function loadLastWeights()  { return loadJSON("lastWeights", {}); }
   function saveLastWeights(w) { saveJSON("lastWeights", w); }
+
+  // ─── Aktive Session (durchführungs-gebunden) ─────────
+  // Spiegelt die GERADE laufende Einheit (state.workout) in localStorage, damit
+  // ein Reload mitten im Training nichts verliert. WICHTIG: rein session-/
+  // durchführungs-gebunden — der Plan (plan.js) wird nie verändert. Eine NEUE
+  // Einheit überschreibt den Key (startWorkout), Beenden/Abbrechen löschen ihn.
+  // Dadurch sind spontane Anpassungen (Skip/Hinzufügen) automatisch „nur heute".
+  function saveActiveSession() {
+    if (!state.workout) return;
+    saveJSON("activeSession", state.workout);
+  }
+  function clearActiveSession() { storageRemove("activeSession"); }
+  // Lädt eine unterbrochene Einheit zurück — defensiv: nur wenn der Tag noch
+  // existiert und mindestens eine bekannte Übung übrig bleibt.
+  function loadActiveSession() {
+    const w = loadJSON("activeSession", null);
+    if (!w || typeof w !== "object" || !PLAN[w.day] || !Array.isArray(w.exercises)) return null;
+    // Übungen mit zwischenzeitlich entfernter ID aussortieren (Render greift
+    // direkt auf EXERCISES[id].name/.svg zu und würde sonst crashen).
+    w.exercises = w.exercises.filter(ex => ex && EXERCISES[ex.id]);
+    if (!w.exercises.length) return null;
+    if (!Array.isArray(w.warmupDone)) w.warmupDone = WARMUP_ITEMS.map(() => false);
+    return w;
+  }
   // Editierbare Notizen pro Übung (global, nicht pro Session): { exId: "text" }
   function loadUserNotes()    { return loadJSON("userNotes", {}); }
   function saveUserNotes(n)   { saveJSON("userNotes", n); }
@@ -389,6 +413,7 @@
       exercises: day.exercises.map(ex => buildWorkoutExercise(ex.id, ex, last, lastWeights))
     };
 
+    saveActiveSession(); // überschreibt evtl. alte aktive Session → neue Einheit startet leer
     renderWorkout();
     showView("workout");
   }
@@ -412,6 +437,7 @@
         row.classList.toggle("done");
         row.querySelector(".warmup-check").classList.toggle("done");
         updateWarmupLabel();
+        saveActiveSession();
       });
     });
     updateWarmupLabel();
@@ -596,6 +622,7 @@
           const inp = card.querySelector(`.val-input[data-ex="${exI}"][data-set="${sI}"][data-field="${field}"]`);
           if (inp) inp.value = set[field];
           updateLiveTonnage();
+          saveActiveSession();
         });
       });
 
@@ -606,6 +633,7 @@
           const raw = e.target.value.trim().replace(",", ".");
           state.workout.exercises[exI].sets[sI][field] = raw === "" ? "" : parseFloat(raw);
           updateLiveTonnage();
+          saveActiveSession();
         };
         input.addEventListener("input", persist);
         input.addEventListener("change", persist);
@@ -676,6 +704,11 @@
     if (!state.workout.exercises.some(e => e.expanded)) {
       $("#warmup-banner").classList.add("open");
     }
+
+    // Jede Render-auslösende Mutation (abhaken, undo, split, tauschen …) hier
+    // mitsichern. Handler ohne Re-Render (Stepper ±, Eingabe, Warm-up) speichern
+    // zusätzlich selbst.
+    saveActiveSession();
   }
 
   function updateProgress() {
@@ -877,6 +910,7 @@
     const tonnage = sessionTonnage(session);
     state.workout = null;
     state.currentDay = null;
+    clearActiveSession(); // Einheit abgeschlossen → aktive Session aufräumen
 
     showSessionSummary(tonnage);
   }
@@ -1059,6 +1093,7 @@
     segHost.innerHTML = ex.unilateral ? segHTML(ex, state.detailExIdx) : "";
     segHost.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
       ex.split = b.dataset.split === "1";
+      saveActiveSession();
       renderExerciseDetail();
     }));
 
@@ -1315,6 +1350,7 @@
       if (ok) {
         stopTimer();
         state.workout = null;
+        clearActiveSession(); // abgebrochene Einheit verwerfen
         showView("home");
       }
     });
@@ -1453,4 +1489,15 @@
   // ─── Initialisierung ─────────────────────────────────
   renderHome();
   setupEvents();
+
+  // Unterbrochene Einheit wiederherstellen (Reload/Crash mitten im Training).
+  // Plan bleibt unberührt — das ist die persistierte Durchführung von vorhin.
+  (function restoreActiveSession() {
+    const w = loadActiveSession();
+    if (!w) return;
+    state.workout = w;
+    state.currentDay = w.day;
+    renderWorkout();
+    showView("workout");
+  })();
 })();
