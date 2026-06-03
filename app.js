@@ -577,12 +577,38 @@
       const card = document.createElement("div");
       card.className = "ex-card" + (ex.expanded ? " open" : "");
       card.dataset.exId = ex.id;
+
+      // Dritter Zustand „übersprungen": eigener, neutraler Look (nicht rot,
+      // nicht ausgeblendet, nicht wie „nicht geschafft"). Reversibel über
+      // „Aufnehmen". Zählt nicht in den Fortschritt (siehe updateProgress).
+      if (ex.skipped) {
+        card.className = "ex-card skipped";
+        card.innerHTML = `
+          <div class="ex-head">
+            <span class="ex-figure" aria-hidden="true">${meta.svg}</span>
+            <div class="ex-skip-main">
+              <h3>${escapeHtml(meta.name)}</h3>
+              <span class="skip-pill">${ICONS.skip} Heute ausgelassen</span>
+            </div>
+            <button class="ex-resume" data-resume="${exIdx}" aria-label="${escapeHtml(meta.name)} wieder aufnehmen">${ICONS.undo}<span>Aufnehmen</span></button>
+          </div>`;
+        card.querySelector("[data-resume]").addEventListener("click", () => {
+          const i = +card.querySelector("[data-resume]").dataset.resume;
+          state.workout.exercises[i].skipped = false;
+          state.workout.exercises[i].expanded = true;
+          haptic(15);
+          renderWorkout();
+        });
+        list.appendChild(card);
+        return;
+      }
+
       card.innerHTML = `
         <div class="ex-head">
           <button class="ex-figure" data-detail="${exIdx}" aria-label="Übungsdetail">${meta.svg}</button>
           <button class="ex-toggle" data-action="toggle">
             <span class="ex-meta">
-              <h3>${escapeHtml(meta.name)}</h3>
+              <h3>${escapeHtml(meta.name)}${ex.addedInSession ? `<span class="ex-added">Zusatz heute</span>` : ""}</h3>
               <p>${escapeHtml(meta.target)} · ${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}</p>
             </span>
             <span class="ex-pos">${exIdx + 1}/${total}</span>
@@ -596,7 +622,10 @@
             ${ex.sets.map((set, sIdx) => setRowHTML(ex, set, exIdx, sIdx, activeIdx)).join("")}
           </div>
           ${noteHTML(ex)}
-          ${(meta.alternatives && meta.alternatives.length) ? `<button class="ex-swap" data-swap-ex="${exIdx}">${ICONS.swap} Übung tauschen</button>` : ""}
+          <div class="ex-actions">
+            ${(meta.alternatives && meta.alternatives.length) ? `<button class="ex-swap" data-swap-ex="${exIdx}">${ICONS.swap} Tauschen</button>` : ""}
+            <button class="ex-skip" data-skip-ex="${exIdx}">${ICONS.skip} Heute auslassen</button>
+          </div>
         </div>`;
 
       // Auf-/Zuklappen
@@ -668,6 +697,17 @@
       const swapBtn = card.querySelector(".ex-swap");
       if (swapBtn) swapBtn.addEventListener("click", () => openSwap(+swapBtn.dataset.swapEx));
 
+      // Übung heute auslassen (session-only, reversibel) → Karte zuklappen und
+      // in den „übersprungen"-Zustand schalten.
+      const skipBtn = card.querySelector(".ex-skip");
+      if (skipBtn) skipBtn.addEventListener("click", () => {
+        const i = +skipBtn.dataset.skipEx;
+        state.workout.exercises[i].skipped = true;
+        state.workout.exercises[i].expanded = false;
+        haptic(15);
+        renderWorkout();
+      });
+
       // Satz bestätigen → done, Pause starten
       card.querySelectorAll(".set-go").forEach(btn => {
         let busy = false;
@@ -713,7 +753,12 @@
 
   function updateProgress() {
     let done = 0, total = 0;
-    state.workout.exercises.forEach(ex => ex.sets.forEach(s => { total++; if (s.done) done++; }));
+    // Übersprungene Übungen zählen NICHT in den Nenner — eine ausgelassene
+    // Übung darf die Einheit nicht wie unvollständig/verfehlt aussehen lassen.
+    state.workout.exercises.forEach(ex => {
+      if (ex.skipped) return;
+      ex.sets.forEach(s => { total++; if (s.done) done++; });
+    });
     const pct = total ? Math.round((done / total) * 100) : 0;
     const ring = $("#workout-ring");
     if (ring) ring.style.setProperty("--p", pct);
@@ -730,7 +775,13 @@
     const el = $("#workout-tonnage");
     if (!el) return;
     const t = currentWorkoutTonnage();
-    el.textContent = t > 0 ? `${formatKg(t)} kg bewegt` : "";
+    const skipped = state.workout ? state.workout.exercises.filter(e => e.skipped).length : 0;
+    const parts = [];
+    if (t > 0) parts.push(`${formatKg(t)} kg bewegt`);
+    // Übersprungenes explizit ausweisen („… · 1 übersprungen") statt es als
+    // fehlende Übung zu kaschieren.
+    if (skipped > 0) parts.push(`${skipped} übersprungen`);
+    el.textContent = parts.join(" · ");
   }
 
   // ─── Timer (Wall-Clock-basiert) ──────────────────────
@@ -1004,25 +1055,42 @@
   }
 
   // Listen-Picker (z. B. Alternativübungen). Liefert den gewählten value oder null.
-  function pickSheet(title, items) {
+  // Optional `searchable`: blendet ein Suchfeld ein, das die Optionen live filtert
+  // (für lange Listen wie das gesamte Übungs-Repertoire).
+  function pickSheet(title, items, { searchable = false } = {}) {
     return new Promise((resolve) => {
       const sheet = $("#picker");
       $("#picker-title").textContent = title;
       const list = $("#picker-list");
       const cancelBtn = $("#picker-cancel");
-      list.innerHTML = items.map((it, i) => `
-        <button class="picker-option" data-idx="${i}">
-          <span class="picker-option-label">${escapeHtml(it.label)}</span>
-          ${it.sub ? `<span class="picker-option-sub">${escapeHtml(it.sub)}</span>` : ""}
-        </button>`).join("");
+      const search = $("#picker-search");
 
+      // Optionen anhand des Filtertexts (Label + Sub) rendern.
+      function renderOptions(filter = "") {
+        const q = filter.trim().toLowerCase();
+        const matches = items.filter(it =>
+          !q || `${it.label} ${it.sub || ""}`.toLowerCase().includes(q));
+        list.innerHTML = matches.length
+          ? matches.map(it => `
+            <button class="picker-option" data-idx="${items.indexOf(it)}">
+              <span class="picker-option-label">${escapeHtml(it.label)}</span>
+              ${it.sub ? `<span class="picker-option-sub">${escapeHtml(it.sub)}</span>` : ""}
+            </button>`).join("")
+          : `<p class="picker-empty">Keine Übung gefunden.</p>`;
+      }
+
+      search.classList.toggle("hidden", !searchable);
+      search.value = "";
+      renderOptions();
       openSheet(sheet);
+      if (searchable) requestAnimationFrame(() => search.focus());
 
       function close(result) {
         closeSheet(sheet);
         list.removeEventListener("click", onListClick);
         cancelBtn.removeEventListener("click", onCancel);
         sheet.removeEventListener("click", onBackdrop);
+        search.removeEventListener("input", onSearch);
         resolve(result);
       }
       const onListClick = (e) => {
@@ -1030,11 +1098,13 @@
         if (!btn) return;
         close(items[parseInt(btn.dataset.idx)].value);
       };
+      const onSearch = (e) => renderOptions(e.target.value);
       const onCancel = () => close(null);
       const onBackdrop = (e) => { if (e.target === sheet) close(null); };
       list.addEventListener("click", onListClick);
       cancelBtn.addEventListener("click", onCancel);
       sheet.addEventListener("click", onBackdrop);
+      search.addEventListener("input", onSearch);
     });
   }
 
@@ -1049,6 +1119,33 @@
     state.workout.exercises[exI] = replacement;
     renderWorkout();
   }
+  // Spontan eine Übung NUR für diese Einheit ergänzen (session-only). Öffnet das
+  // gesamte Repertoire (ohne bereits enthaltene) mit Suche; die Wahl wird mit
+  // Default-Schema ans Ende gehängt und als „Zusatz heute" markiert.
+  async function addExerciseToSession() {
+    if (!state.workout) return;
+    const present = new Set(state.workout.exercises.map(e => e.id));
+    const choices = Object.keys(EXERCISES)
+      .filter(id => !present.has(id))
+      .map(id => ({ value: id, label: EXERCISES[id].name, sub: EXERCISES[id].target }))
+      .sort((a, b) => a.label.localeCompare(b.label, "de"));
+    if (!choices.length) {
+      await infoSheet({ title: "Alles dabei", message: "Alle Übungen sind bereits in dieser Einheit." });
+      return;
+    }
+    const chosen = await pickSheet("Übung hinzufügen", choices, { searchable: true });
+    if (!chosen) return;
+    const spec = { sets: 3, repsLow: 10, repsHigh: 12, rest: state.settings.defaultRest };
+    const ex = buildWorkoutExercise(chosen, spec, getLastSessionForDay(state.currentDay), loadLastWeights());
+    ex.addedInSession = true;
+    ex.expanded = true;
+    state.workout.exercises.push(ex);
+    renderWorkout();
+    const cards = $("#exercise-list").children;
+    const lastCard = cards[cards.length - 1];
+    if (lastCard) requestAnimationFrame(() => lastCard.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }
+
   async function openSwap(exI) {
     const meta = EXERCISES[state.workout.exercises[exI].id] || {};
     const alts = (meta.alternatives || []).filter(id => EXERCISES[id]);
@@ -1354,6 +1451,8 @@
         showView("home");
       }
     });
+
+    $("#add-exercise").addEventListener("click", addExerciseToSession);
 
     $("#finish-workout").addEventListener("click", async () => {
       const anyDone = state.workout.exercises.some(ex => ex.sets.some(s => s.done));

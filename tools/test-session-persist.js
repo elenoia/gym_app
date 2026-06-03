@@ -63,6 +63,52 @@ const assert = (cond, msg) => { if (!cond) throw new Error("FAIL: " + msg); cons
     const doneAfter = await page.$$eval('.set.done', els => els.length);
     assert(doneAfter === doneBefore, `abgehakte Sätze überleben Reload (${doneAfter})`);
 
+    // ── Skip (Increment 2) ──
+    // Ringnenner vor Skip merken (Gesamt-Sätze).
+    const totalBefore = await page.evaluate(() => {
+      const m = document.querySelector("#workout-ring-label").textContent.match(/\/(\d+)/);
+      return m ? +m[1] : null;
+    });
+    // Letzte Übung aufklappen und „Heute auslassen".
+    const lastToggle = await page.$$('.ex-card .ex-toggle');
+    await lastToggle[lastToggle.length - 1].click();
+    await page.waitForSelector('.ex-skip');
+    await page.$$eval('.ex-skip', els => els[els.length - 1].click());
+    await page.waitForSelector('.ex-card.skipped');
+    assert(true, "Übung zeigt 'übersprungen'-Zustand (eigene Karte)");
+    const totalAfter = await page.evaluate(() => {
+      const m = document.querySelector("#workout-ring-label").textContent.match(/\/(\d+)/);
+      return m ? +m[1] : null;
+    });
+    assert(totalAfter < totalBefore, `übersprungene Sätze raus aus Nenner (${totalBefore} → ${totalAfter})`);
+    const skipNote = await page.textContent("#workout-tonnage");
+    assert(/übersprungen/.test(skipNote), `Statuszeile weist Skip aus: "${skipNote.trim()}"`);
+    // Skip überlebt Reload.
+    await page.goto(URL, { waitUntil: "networkidle" });
+    await page.waitForSelector("#view-workout.active");
+    assert(await page.$('.ex-card.skipped') !== null, "übersprungen überlebt Reload");
+    // Wieder aufnehmen.
+    await page.click('.ex-resume');
+    await page.waitForFunction(() => !document.querySelector('.ex-card.skipped'));
+    assert(true, "Übung wieder aufgenommen (reversibel)");
+
+    // ── Übung hinzufügen (Increment 3) ──
+    const exCountBefore = await page.$$eval('.ex-card', els => els.length);
+    await page.click("#add-exercise");
+    await page.waitForSelector("#picker.visible");
+    assert(!(await page.$eval("#picker-search", el => el.classList.contains("hidden"))), "Picker zeigt Suchfeld");
+    await page.fill("#picker-search", "lieg");
+    await page.waitForFunction(() => document.querySelectorAll('.picker-option').length >= 1);
+    const optCount = await page.$$eval('.picker-option', els => els.length);
+    assert(optCount >= 1, `Suche filtert (${optCount} Treffer für "lieg")`);
+    await page.click('.picker-option');
+    await page.waitForFunction((n) => document.querySelectorAll('.ex-card').length === n + 1, exCountBefore);
+    assert(await page.$('.ex-added') !== null, "neue Übung trägt Badge 'Zusatz heute'");
+    // Hinzugefügte Übung überlebt Reload.
+    await page.goto(URL, { waitUntil: "networkidle" });
+    await page.waitForSelector("#view-workout.active");
+    assert(await page.$$eval('.ex-card', els => els.length) === exCountBefore + 1, "hinzugefügte Übung überlebt Reload");
+
     // Beenden → aktive Session wird aufgeräumt.
     await page.click("#finish-workout");
     await page.waitForSelector("#view-home.active", { timeout: 5000 });
@@ -74,9 +120,16 @@ const assert = (cond, msg) => { if (!cond) throw new Error("FAIL: " + msg); cons
     await page.waitForSelector("#view-home.active", { timeout: 5000 });
     assert(true, "Reload auf Home bleibt Home");
 
-    // Neue Einheit + Abbrechen → ebenfalls aufgeräumt.
+    // Neue Einheit desselben Workouts → MUSS wieder leer sein (Kern der
+    // „nur für heute"-Regel): kein Zusatz, nichts übersprungen.
     await page.click(".today-card");
     await page.waitForSelector("#view-workout.active");
+    const exCountNew = await page.$$eval('.ex-card', els => els.length);
+    assert(exCountNew === exCountBefore, `neue Einheit ohne den Zusatz von vorhin (${exCountNew} == ${exCountBefore})`);
+    assert(await page.$('.ex-card.skipped') === null, "neue Einheit ohne übersprungene Übungen");
+    assert(await page.$('.ex-added') === null, "neue Einheit ohne 'Zusatz heute'-Badge");
+
+    // Abbrechen → aktive Session wird aufgeräumt.
     await page.click("#back-home");
     await page.waitForSelector("#sheet.visible");
     await page.click("#sheet-confirm");               // "Abbrechen" bestätigen

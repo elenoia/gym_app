@@ -302,11 +302,25 @@ h1, h2, h3 {
 .note-edit textarea { width: 100%; border: none; background: none; resize: none; color: var(--text); font: inherit; font-size: 13.5px; line-height: 1.5; outline: none; }
 .note-edit textarea::placeholder { color: var(--muted); }
 
-/* Übung tauschen */
-.ex-swap { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 9px 13px;
+/* Übung tauschen / heute auslassen — eine Aktions-Zeile */
+.ex-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.ex-swap, .ex-skip { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px;
   background: transparent; border: 1px solid var(--line); border-radius: var(--r-xs); color: var(--dim); font: inherit; font-size: 13px; transition: color .15s, border-color .15s; }
-.ex-swap:active { color: var(--accent); border-color: var(--accent-line); }
-.ex-swap svg { flex: 0 0 auto; }
+.ex-swap:active, .ex-skip:active { color: var(--accent); border-color: var(--accent-line); }
+.ex-swap svg, .ex-skip svg { flex: 0 0 auto; }
+
+/* Dritter Zustand: übersprungen — neutral, gedämpft, gestrichelt (klar als
+   eigener Zustand erkennbar, nicht wie „nicht geschafft"). */
+.ex-card.skipped { border-style: dashed; }
+.ex-card.skipped .ex-figure { opacity: .4; }
+.ex-skip-main { flex: 1; min-width: 0; }
+.ex-skip-main h3 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: var(--dim); }
+.skip-pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.skip-pill svg { flex: 0 0 auto; }
+.ex-resume { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: var(--r-xs);
+  background: transparent; border: 1px solid var(--line); color: var(--dim); font: inherit; font-size: 13px; font-weight: 600; transition: color .15s, border-color .15s; }
+.ex-resume:active { color: var(--accent); border-color: var(--accent-line); }
+.ex-resume svg { flex: 0 0 auto; }
 
 /* Kopf: Figur (→ Detail) + Toggle (auf/zu) getrennt klickbar */
 .ex-toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: 13px; text-align: left; }
@@ -366,6 +380,25 @@ h1, h2, h3 {
 .picker-option:active { border-color: var(--accent); }
 .picker-option-label { font-size: 15px; font-weight: 500; }
 .picker-option-sub { font-size: 12px; color: var(--muted); }
+/* Lange Listen (Repertoire) scrollbar halten, Sheet bleibt kompakt. */
+.picker-list { max-height: 52vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.picker-search { width: 100%; margin: 4px 0 10px; padding: 11px 13px; background: var(--bg);
+  border: 1px solid var(--line); border-radius: 12px; color: var(--text); font: inherit; font-size: 15px; outline: none; transition: border-color .15s; }
+.picker-search:focus { border-color: var(--accent); }
+.picker-search::placeholder { color: var(--muted); }
+.picker-empty { padding: 18px 4px; text-align: center; font-size: 13px; color: var(--muted); }
+
+/* „Übung hinzufügen" — sekundär, gestrichelt, klar unter der Liste */
+.add-ex-btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; width: 100%; margin-top: 16px;
+  padding: 14px; background: transparent; border: 1px dashed var(--line); border-radius: var(--r);
+  color: var(--dim); font: inherit; font-size: 14px; font-weight: 600; transition: color .15s, border-color .15s; }
+.add-ex-btn:active { color: var(--accent); border-color: var(--accent-line); }
+.add-ex-btn svg { flex: 0 0 auto; }
+
+/* Badge „Zusatz heute" an spontan ergänzten Übungen */
+.ex-added { display: inline-block; margin-left: 8px; padding: 2px 8px; vertical-align: middle;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .01em; color: var(--accent);
+  background: var(--accent-soft); border-radius: 999px; }
 
 /* Finish-Button */
 .finish-btn {

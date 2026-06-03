@@ -94,6 +94,11 @@
 
       <div class="exercise-list" id="exercise-list"></div>
 
+      <button class="add-ex-btn" id="add-exercise">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Übung hinzufügen
+      </button>
+
       <button class="finish-btn" id="finish-workout">Training beenden</button>
     </section>
 
@@ -201,6 +206,7 @@
     <div id="picker" class="sheet hidden" role="dialog" aria-modal="true">
       <div class="sheet-card">
         <h3 id="picker-title"></h3>
+        <input id="picker-search" class="picker-search hidden" type="text" inputmode="search" autocomplete="off" placeholder="Übung suchen …" />
         <div id="picker-list" class="picker-list"></div>
         <div class="sheet-actions">
           <button class="text-btn" id="picker-cancel">Abbrechen</button>
