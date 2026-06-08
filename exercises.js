@@ -835,19 +835,322 @@ const EXERCISES = {
         </line>
       </g>
     </svg>`
+  },
+
+  // ───── Vertikale Chest Press (Maschine) ─────
+  vertikale_chestpress: {
+    name: "Vertikale Chest Press",
+    target: "Brust",
+    notes: "Aufrecht sitzen, Schulterblätter hinten unten. Griffe nach vorn und leicht aufwärts drücken, Ellbogen am Ende nicht ganz durchstrecken.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Backrest (aufrecht) -->
+        <line x1="30" y1="34" x2="31" y2="80" stroke="#3A3A5C" stroke-width="6"/>
+        <!-- Seat -->
+        <rect x="30" y="76" width="24" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
+        <!-- Head -->
+        <circle cx="38" cy="38" r="5" fill="#D89D8E"/>
+        <!-- Torso -->
+        <line x1="39" y1="43" x2="40" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Legs forward -->
+        <line x1="40" y1="76" x2="58" y2="78" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="58" y1="78" x2="60" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Upper arm (shoulder ~(40,48)) -->
+        <line x1="40" y1="48" x2="50" y2="52" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="50;46;50" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="52;50;52" dur="2.3s" repeatCount="indefinite"/>
+        </line>
+        <!-- Forearm presses forward + slightly up -->
+        <line x1="50" y1="52" x2="68" y2="44" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x1" values="50;46;50" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="y1" values="52;50;52" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="x2" values="68;54;68" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="44;52;44" dur="2.3s" repeatCount="indefinite"/>
+        </line>
+        <!-- Handle / pad (vor + hoch beim Drücken) -->
+        <rect x="66" y="38" width="6" height="14" rx="1.5" fill="#D89D8E">
+          <animate attributeName="x" values="66;52;66" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="38;46;38" dur="2.3s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </svg>`
+  },
+
+  // ───── Rumänisches Kreuzheben (Langhantel) ─────
+  rdl: {
+    name: "Rumänisches Kreuzheben",
+    target: "Gesäß, hintere Oberschenkel, unterer Rücken",
+    notes: "Hüfte nach hinten schieben (Hip Hinge), Rücken gerade. Hantel dicht an den Beinen entlang absenken bis zur Schienbeinmitte, dann aus dem Gesäß zurück. Knie nur leicht gebeugt.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Floor -->
+        <line x1="14" y1="94" x2="86" y2="94" stroke="#8B8298" stroke-width="1.2"/>
+        <!-- Legs (leichte Kniebeugung, stehend) -->
+        <line x1="50" y1="60" x2="47" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="47" y1="76" x2="47" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="50" y1="60" x2="55" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="55" y1="76" x2="55" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Hip joint (Pivot der Hüftbeuge) -->
+        <circle cx="50" cy="60" r="2" fill="#F2E9E4"/>
+        <!-- Torso klappt aus der Hüfte nach vorn -->
+        <line x1="50" y1="60" x2="50" y2="34" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="50;68;50" dur="2.8s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="34;46;34" dur="2.8s" repeatCount="indefinite"/>
+        </line>
+        <!-- Head -->
+        <circle cx="50" cy="29" r="5" fill="#D89D8E">
+          <animate attributeName="cx" values="50;71;50" dur="2.8s" repeatCount="indefinite"/>
+          <animate attributeName="cy" values="29;42;29" dur="2.8s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Arme: Schulter → Hände (hängen Richtung Hantel) -->
+        <line x1="50" y1="38" x2="52" y2="56" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x1" values="50;67;50" dur="2.8s" repeatCount="indefinite"/>
+          <animate attributeName="y1" values="38;47;38" dur="2.8s" repeatCount="indefinite"/>
+          <animate attributeName="x2" values="52;60;52" dur="2.8s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="56;78;56" dur="2.8s" repeatCount="indefinite"/>
+        </line>
+        <!-- Langhantel (bleibt horizontal, senkt sich an den Schienbeinen) -->
+        <rect x="44" y="54" width="20" height="5" rx="1.5" fill="#D89D8E">
+          <animate attributeName="x" values="44;50;44" dur="2.8s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="54;76;54" dur="2.8s" repeatCount="indefinite"/>
+        </rect>
+        <!-- Hantelscheiben -->
+        <circle cx="46" cy="56.5" r="4" stroke="#8B8298" stroke-width="1.5" fill="#3A3A5C">
+          <animate attributeName="cx" values="46;52;46" dur="2.8s" repeatCount="indefinite"/>
+          <animate attributeName="cy" values="56.5;78.5;56.5" dur="2.8s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="62" cy="56.5" r="4" stroke="#8B8298" stroke-width="1.5" fill="#3A3A5C">
+          <animate attributeName="cx" values="62;68;62" dur="2.8s" repeatCount="indefinite"/>
+          <animate attributeName="cy" values="56.5;78.5;56.5" dur="2.8s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </svg>`
+  },
+
+  // ───── Untergriff-Langhantelrudern ─────
+  langhantelrudern_untergriff: {
+    name: "Untergriff-Langhantelrudern",
+    target: "Rücken (untere Lats), Bizeps",
+    notes: "Oberkörper bei ~45° vorgebeugt, Rücken gerade. Untergriff schulterbreit. Hantel zum unteren Bauch ziehen, Ellbogen am Körper, Schulterblätter zusammen.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Floor -->
+        <line x1="10" y1="92" x2="90" y2="92" stroke="#8B8298" stroke-width="1.2"/>
+        <!-- Head -->
+        <circle cx="26" cy="38" r="5" fill="#D89D8E"/>
+        <!-- Torso vorgebeugt (Schulter → Hüfte) -->
+        <line x1="30" y1="42" x2="54" y2="58" stroke="#F2E9E4" stroke-width="2.5"/>
+        <circle cx="54" cy="58" r="2" fill="#F2E9E4"/>
+        <!-- Beine (leicht gebeugt) -->
+        <line x1="54" y1="58" x2="52" y2="74" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="52" y1="74" x2="54" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="54" y1="58" x2="62" y2="74" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="62" y1="74" x2="62" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Arm (Schulter → Hände an der Hantel; zieht hoch) -->
+        <line x1="30" y1="44" x2="34" y2="70" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="y2" values="70;58;70" dur="2.4s" repeatCount="indefinite"/>
+        </line>
+        <!-- Langhantel (Untergriff) zieht zum Bauch -->
+        <rect x="24" y="68" width="20" height="5" rx="1.5" fill="#D89D8E">
+          <animate attributeName="y" values="68;56;68" dur="2.4s" repeatCount="indefinite"/>
+        </rect>
+        <circle cx="26" cy="70.5" r="4" stroke="#8B8298" stroke-width="1.5" fill="#3A3A5C">
+          <animate attributeName="cy" values="70.5;58.5;70.5" dur="2.4s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="42" cy="70.5" r="4" stroke="#8B8298" stroke-width="1.5" fill="#3A3A5C">
+          <animate attributeName="cy" values="70.5;58.5;70.5" dur="2.4s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </svg>`
+  },
+
+  // ───── Schulterdrücken mit Langhantel (Overhead Press, stehend) ─────
+  ohp_langhantel: {
+    name: "Schulterdrücken mit Langhantel",
+    target: "Schultern, Trizeps",
+    notes: "Stand schulterbreit, Rumpf fest, kein Hohlkreuz. Stange vom oberen Brustansatz senkrecht nach oben drücken, Kopf leicht zurück. Oben kurz ausstrecken.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Floor -->
+        <line x1="24" y1="94" x2="76" y2="94" stroke="#8B8298" stroke-width="1.2"/>
+        <!-- Head -->
+        <circle cx="50" cy="40" r="5" fill="#D89D8E"/>
+        <!-- Torso -->
+        <line x1="50" y1="45" x2="50" y2="68" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Beine -->
+        <line x1="50" y1="68" x2="44" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="50" y1="68" x2="56" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Oberarme (Schulter → Ellbogen, seitlich) -->
+        <line x1="47" y1="48" x2="38" y2="44" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="53" y1="48" x2="62" y2="44" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Unterarme drücken hoch zur Hantel -->
+        <line x1="38" y1="44" x2="40" y2="26" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="y2" values="26;13;26" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="x2" values="40;42;40" dur="2.3s" repeatCount="indefinite"/>
+        </line>
+        <line x1="62" y1="44" x2="60" y2="26" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="y2" values="26;13;26" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="x2" values="60;58;60" dur="2.3s" repeatCount="indefinite"/>
+        </line>
+        <!-- Langhantel über Kopf -->
+        <rect x="34" y="23" width="32" height="5" rx="1.5" fill="#D89D8E">
+          <animate attributeName="y" values="23;10;23" dur="2.3s" repeatCount="indefinite"/>
+        </rect>
+        <circle cx="36" cy="25.5" r="4" stroke="#8B8298" stroke-width="1.5" fill="#3A3A5C">
+          <animate attributeName="cy" values="25.5;12.5;25.5" dur="2.3s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="64" cy="25.5" r="4" stroke="#8B8298" stroke-width="1.5" fill="#3A3A5C">
+          <animate attributeName="cy" values="25.5;12.5;25.5" dur="2.3s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </svg>`
+  },
+
+  // ───── Rear Delt Pull auf Schrägbank (Kurzhanteln, bäuchlings) ─────
+  rear_delt_pull: {
+    name: "Rear Delt Pull auf Schrägbank",
+    target: "Hintere Schulter, oberer Rücken",
+    notes: "Brust liegt auf der Schrägbank, Arme hängen locker nach unten. Kurzhanteln mit leicht gebeugten Ellbogen nach außen/hinten führen, Bewegung aus der hinteren Schulter. Schulterblätter zusammen.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Bankbeine -->
+        <line x1="30" y1="70" x2="30" y2="92" stroke="#8B8298" stroke-width="1.5"/>
+        <line x1="74" y1="54" x2="74" y2="92" stroke="#8B8298" stroke-width="1.5"/>
+        <!-- Schrägbank-Auflage -->
+        <line x1="22" y1="74" x2="82" y2="44" stroke="#3A3A5C" stroke-width="7"/>
+        <!-- Kopf (oberes Ende) -->
+        <circle cx="84" cy="40" r="5" fill="#D89D8E"/>
+        <!-- Körper bäuchlings auf der Bank -->
+        <line x1="78" y1="44" x2="34" y2="66" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Beine -->
+        <line x1="34" y1="66" x2="24" y2="80" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Schulterpunkt -->
+        <circle cx="74" cy="48" r="2" fill="#F2E9E4"/>
+        <!-- Linker Arm + Kurzhantel: hängt runter → nach außen/hinten hoch -->
+        <line x1="74" y1="48" x2="67" y2="66" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="67;59;67" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="66;52;66" dur="2.4s" repeatCount="indefinite"/>
+        </line>
+        <rect x="63" y="64" width="10" height="5" rx="1.5" fill="#D89D8E">
+          <animate attributeName="x" values="63;55;63" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="64;50;64" dur="2.4s" repeatCount="indefinite"/>
+        </rect>
+        <!-- Rechter Arm + Kurzhantel -->
+        <line x1="74" y1="48" x2="81" y2="66" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="81;89;81" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="66;52;66" dur="2.4s" repeatCount="indefinite"/>
+        </line>
+        <rect x="77" y="64" width="10" height="5" rx="1.5" fill="#D89D8E">
+          <animate attributeName="x" values="77;85;77" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="64;50;64" dur="2.4s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </svg>`
+  },
+
+  // ───── Klimmzüge am Turm (unterstützt) ─────
+  // INVERTIERTE PROGRESSION: getrackt wird das Gegengewicht (kg). Weniger = besser.
+  klimmzug_unterstuetzt: {
+    name: "Klimmzüge am Turm (unterstützt)",
+    target: "Lats, oberer Rücken, Bizeps, Griff",
+    notes: "Auf dem Polster knien/stehen — es gibt das eingestellte Gegengewicht als Unterstützung. Aus dem Lat hochziehen bis das Kinn über die Stange kommt, Schulterblätter zuerst nach unten. Weniger Gegengewicht = mehr Eigenleistung.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Rahmen -->
+        <line x1="24" y1="14" x2="24" y2="92" stroke="#8B8298" stroke-width="1.6"/>
+        <line x1="76" y1="14" x2="76" y2="92" stroke="#8B8298" stroke-width="1.6"/>
+        <line x1="24" y1="16" x2="76" y2="16" stroke="#8B8298" stroke-width="2"/>
+        <!-- Griffstange -->
+        <line x1="38" y1="20" x2="62" y2="20" stroke="#D89D8E" stroke-width="3"/>
+        <!-- Arme: Griff → Schulter (beugen beim Hochziehen) -->
+        <line x1="40" y1="20" x2="46" y2="42" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="y2" values="42;30;42" dur="2.6s" repeatCount="indefinite"/>
+        </line>
+        <line x1="60" y1="20" x2="54" y2="42" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="y2" values="42;30;42" dur="2.6s" repeatCount="indefinite"/>
+        </line>
+        <!-- Kopf -->
+        <circle cx="50" cy="36" r="5" fill="#D89D8E">
+          <animate attributeName="cy" values="36;26;36" dur="2.6s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Torso -->
+        <line x1="50" y1="41" x2="50" y2="64" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="y1" values="41;31;41" dur="2.6s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="64;52;64" dur="2.6s" repeatCount="indefinite"/>
+        </line>
+        <!-- Oberschenkel (Hüfte → Knie, kniend) -->
+        <line x1="50" y1="64" x2="62" y2="70" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="y1" values="64;52;64" dur="2.6s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="70;58;70" dur="2.6s" repeatCount="indefinite"/>
+        </line>
+        <!-- Schienbein (Knie → Polster) -->
+        <line x1="62" y1="70" x2="60" y2="80" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="y1" values="70;58;70" dur="2.6s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="80;68;80" dur="2.6s" repeatCount="indefinite"/>
+        </line>
+        <!-- Kniepolster (Gegengewicht-Assist) bewegt sich mit -->
+        <rect x="46" y="80" width="22" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.4">
+          <animate attributeName="y" values="80;68;80" dur="2.6s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </svg>`
+  },
+
+  // ───── BOSU Core-Halt ─────
+  // ZEITBASIERT: getrackt wird die Haltedauer in Sekunden. Länger = besser.
+  bosu_core: {
+    name: "BOSU Core-Halt",
+    target: "Rumpf (tiefe Bauch-/Stabilisatormuskulatur)",
+    notes: "Sitzend auf der BOSU-Kuppel, leicht zurücklehnen und die Füße anheben (V-Sit). Den Rumpf fest anspannen und die Balance auf dem instabilen Untergrund halten. Atmen nicht vergessen.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Boden -->
+        <line x1="20" y1="86" x2="80" y2="86" stroke="#8B8298" stroke-width="1.2"/>
+        <!-- BOSU: Basis + Kuppel -->
+        <line x1="30" y1="80" x2="70" y2="80" stroke="#3A3A5C" stroke-width="2"/>
+        <path d="M32 80 A 18 14 0 0 1 68 80" stroke="#8B8298" stroke-width="2" fill="#3A3A5C" fill-opacity="0.25"/>
+        <!-- Körper balanciert auf der Kuppel (leichtes Wackeln) -->
+        <g>
+          <animateTransform attributeName="transform" type="rotate"
+            values="-4 50 66;4 50 66;-4 50 66" dur="3s" repeatCount="indefinite"/>
+          <!-- Hüfte auf der Kuppel -->
+          <circle cx="50" cy="66" r="2" fill="#F2E9E4"/>
+          <!-- Torso zurückgelehnt -->
+          <line x1="50" y1="66" x2="40" y2="50" stroke="#F2E9E4" stroke-width="2.5"/>
+          <!-- Kopf -->
+          <circle cx="37" cy="46" r="5" fill="#D89D8E"/>
+          <!-- Arme nach vorn (Balance) -->
+          <line x1="44" y1="56" x2="58" y2="52" stroke="#F2E9E4" stroke-width="2.5"/>
+          <!-- Oberschenkel angehoben (V-Sit) -->
+          <line x1="50" y1="66" x2="64" y2="54" stroke="#F2E9E4" stroke-width="2.5"/>
+          <!-- Schienbein -->
+          <line x1="64" y1="54" x2="76" y2="48" stroke="#F2E9E4" stroke-width="2.5"/>
+        </g>
+      </g>
+    </svg>`
   }
 };
 
 /**
  * Struktur-Metadaten je Übung (Punkt 4/5/6 aus dem Umbau).
  *
- *   equipment    – "Maschine" | "Kabel" | "Freihantel" | "Band" | "Körpergewicht"
+ *   equipment    – "Maschine" | "Kabel" | "Freihantel" | "Langhantel" | "Band" | "Körpergewicht"
  *   unilateral   – true, wenn die Übung pro Seite ausgeführt wird. Steuert sowohl
  *                  die getrennte L/R-Eingabe als auch die Tonnage (einseitig zählt
  *                  pro Seite, siehe setVolume() in app.js).
  *   muscles      – Hauptmuskelgruppe(n), für Filter/Anzeige.
  *   alternatives – IDs gleichwertiger Übungen (gleiche Muskelgruppe, anderes Gerät),
  *                  die beim Training schnell getauscht werden können.
+ *   startWeight  – optionales Startgewicht (kg) für die allererste Einheit. Greift
+ *                  nur, solange es noch keinen gespeicherten Gewichtsverlauf gibt
+ *                  (buildWorkoutExercise in app.js). Fehlt das Feld → Feld bleibt leer.
+ *   metric       – "weight" (Standard, Gewicht × Wdh.) oder "duration" (Haltedauer
+ *                  in Sekunden, kein Gewicht, keine Wdh., 0 kg Tonnage).
+ *   inverseProgression – true bei unterstützten Übungen: getrackt wird das
+ *                  GEGENGEWICHT (kg), niedriger = bessere Leistung. Wird überall
+ *                  invertiert, wo Progression bewertet wird (lastBest etc.), und
+ *                  zählt 0 kg zur Tonnage. UI-Label: "Gegengewicht (kg)".
+ *   startDuration – optionale Startdauer (Sek.) für metric:"duration".
  *
  * Bewusst als separater Block gehalten, damit die großen SVG-Objekte oben
  * unangetastet bleiben. Die Schleife darunter merged die Felder in EXERCISES
@@ -857,28 +1160,43 @@ const EXERCISE_META = {
   beinpresse:       { equipment: "Maschine",      unilateral: false, muscles: ["Quadrizeps", "Gesäß"],            alternatives: ["beinstrecker"] },
   bankdruecken:     { equipment: "Freihantel",    unilateral: false, muscles: ["Brust", "Schultern", "Trizeps"], alternatives: ["butterfly", "liegestuetze"] },
   butterfly:        { equipment: "Maschine",      unilateral: false, muscles: ["Brust"],                          alternatives: ["bankdruecken", "liegestuetze"] },
-  latzug_breit:     { equipment: "Kabel",         unilateral: false, muscles: ["Latissimus", "Oberer Rücken"],   alternatives: ["latzug_eng", "kabelrudern"] },
-  rueckenstrecker:  { equipment: "Körpergewicht", unilateral: false, muscles: ["Unterer Rücken", "Gesäß"],       alternatives: ["hip_thrust"] },
-  bauchmaschine:    { equipment: "Maschine",      unilateral: false, muscles: ["Bauch"],                          alternatives: ["knee_tuck_ball"] },
-  knee_tuck_ball:   { equipment: "Körpergewicht", unilateral: false, muscles: ["Bauch", "Core"],                  alternatives: ["bauchmaschine"] },
+  latzug_breit:     { equipment: "Kabel",         unilateral: false, muscles: ["Latissimus", "Oberer Rücken"],   alternatives: ["latzug_eng", "kabelrudern", "klimmzug_unterstuetzt"] },
+  rueckenstrecker:  { equipment: "Körpergewicht", unilateral: false, muscles: ["Unterer Rücken", "Gesäß"],       alternatives: ["hip_thrust", "rdl"] },
+  bauchmaschine:    { equipment: "Maschine",      unilateral: false, muscles: ["Bauch"],                          alternatives: ["knee_tuck_ball", "bosu_core"] },
+  knee_tuck_ball:   { equipment: "Körpergewicht", unilateral: false, muscles: ["Bauch", "Core"],                  alternatives: ["bauchmaschine", "bosu_core"] },
   beinstrecker:     { equipment: "Maschine",      unilateral: false, muscles: ["Quadrizeps"],                     alternatives: ["beinpresse"] },
-  beinbeuger:       { equipment: "Maschine",      unilateral: false, muscles: ["Hamstrings"],                     alternatives: ["hip_thrust"] },
-  schulterdruecken: { equipment: "Freihantel",    unilateral: false, muscles: ["Schultern", "Trizeps"],          alternatives: [] },
+  beinbeuger:       { equipment: "Maschine",      unilateral: false, muscles: ["Hamstrings"],                     alternatives: ["hip_thrust", "rdl"] },
+  schulterdruecken: { equipment: "Freihantel",    unilateral: false, muscles: ["Schultern", "Trizeps"],          alternatives: ["ohp_langhantel"] },
   // Rudern am Kabelturm: als einseitige Variante markiert (Punkt 4).
-  kabelrudern:      { equipment: "Kabel",         unilateral: true,  muscles: ["Oberer Rücken", "Rhomboiden"],   alternatives: ["rudern_maschine", "latzug_breit"],
+  kabelrudern:      { equipment: "Kabel",         unilateral: true,  muscles: ["Oberer Rücken", "Rhomboiden"],   alternatives: ["rudern_maschine", "latzug_breit", "langhantelrudern_untergriff"],
                       note: "Mit anderen Griffen anderes Gewicht. Mit Bändern weiter zum Bauchnabel und dann hinten pulsieren, einseitig mit 4,5 kg." },
   bizeps_curls:     { equipment: "Freihantel",    unilateral: false, muscles: ["Bizeps"],                         alternatives: ["latzug_eng"] },
   trizeps_kabel:    { equipment: "Kabel",         unilateral: false, muscles: ["Trizeps"],                        alternatives: ["liegestuetze"] },
-  hip_thrust:       { equipment: "Freihantel",    unilateral: false, muscles: ["Gesäß"],                          alternatives: ["rueckenstrecker", "beinbeuger"] },
+  hip_thrust:       { equipment: "Freihantel",    unilateral: false, muscles: ["Gesäß"],                          alternatives: ["rueckenstrecker", "beinbeuger", "rdl"] },
   // Face Pulls als einseitige Kabelzug-Variante (Punkt 4).
-  face_pulls:       { equipment: "Kabel",         unilateral: true,  muscles: ["Hintere Schulter", "Trapez"],    alternatives: [] },
+  face_pulls:       { equipment: "Kabel",         unilateral: true,  muscles: ["Hintere Schulter", "Trapez"],    alternatives: ["rear_delt_pull"] },
   liegestuetze:     { equipment: "Körpergewicht", unilateral: false, muscles: ["Brust", "Schultern", "Trizeps", "Core"], alternatives: ["bankdruecken", "butterfly"] },
-  latzug_eng:       { equipment: "Kabel",         unilateral: false, muscles: ["Latissimus", "Bizeps"],          alternatives: ["latzug_breit", "bizeps_curls"] },
+  latzug_eng:       { equipment: "Kabel",         unilateral: false, muscles: ["Latissimus", "Bizeps"],          alternatives: ["latzug_breit", "bizeps_curls", "langhantelrudern_untergriff"] },
   rudern_maschine:  { equipment: "Maschine",      unilateral: false, muscles: ["Oberer Rücken", "Latissimus"],   alternatives: ["kabelrudern", "latzug_breit"] },
   abduktoren:       { equipment: "Maschine",      unilateral: false, muscles: ["Gesäß", "Hüfte"],               alternatives: ["hip_thrust"] },
-  brustpresse:      { equipment: "Maschine",      unilateral: false, muscles: ["Brust"],                         alternatives: ["butterfly", "bankdruecken"] },
-  schulterpresse:   { equipment: "Maschine",      unilateral: false, muscles: ["Schultern"],                     alternatives: ["schulterdruecken"] },
-  reverse_fly:      { equipment: "Maschine",      unilateral: false, muscles: ["Hintere Schulter", "Trapez"],   alternatives: ["face_pulls"] }
+  brustpresse:      { equipment: "Maschine",      unilateral: false, muscles: ["Brust"],                         alternatives: ["vertikale_chestpress", "butterfly", "bankdruecken"] },
+  schulterpresse:   { equipment: "Maschine",      unilateral: false, muscles: ["Schultern"],                     alternatives: ["schulterdruecken", "ohp_langhantel"] },
+  reverse_fly:      { equipment: "Maschine",      unilateral: false, muscles: ["Hintere Schulter", "Trapez"],   alternatives: ["face_pulls", "rear_delt_pull"] },
+  // Maschinenplan: ersetzt die Brustpresse. Anderes Gerät → eigener, frischer
+  // Gewichtsverlauf (neue ID, keine Historie). Gegenseitig mit Brustpresse verlinkt.
+  vertikale_chestpress: { equipment: "Maschine",  unilateral: false, muscles: ["Brust"],                         alternatives: ["brustpresse", "butterfly"] },
+  // Hintere Kette; Startgewicht 12 kg für die erste Einheit.
+  rdl:              { equipment: "Langhantel",    unilateral: false, muscles: ["Gesäß", "Hamstrings", "Unterer Rücken"], alternatives: ["rueckenstrecker", "beinbeuger", "hip_thrust"], startWeight: 12 },
+  // Freie Zug-Variante zum Kabelrudern (horizontaler Zug).
+  langhantelrudern_untergriff: { equipment: "Langhantel", unilateral: false, muscles: ["Latissimus", "Bizeps"],        alternatives: ["kabelrudern", "latzug_eng"] },
+  // Freie Variante zum Maschinen-Schulterdrücken (Overhead Press).
+  ohp_langhantel:   { equipment: "Langhantel",    unilateral: false, muscles: ["Schultern", "Trizeps"],               alternatives: ["schulterpresse", "schulterdruecken"] },
+  // Kurzhantel-Ergänzung zu den Face Pulls (hintere Schulter).
+  rear_delt_pull:   { equipment: "Kurzhanteln",   unilateral: false, muscles: ["Hintere Schulter", "Oberer Rücken"],  alternatives: ["face_pulls", "reverse_fly"] },
+  // Vertikaler Zug als Alternative zum Latzug. INVERTIERT: getrackt = Gegengewicht (kg).
+  klimmzug_unterstuetzt: { equipment: "Maschine", unilateral: false, muscles: ["Latissimus", "Oberer Rücken", "Bizeps"], alternatives: ["latzug_breit", "latzug_eng"], inverseProgression: true },
+  // Zeitbasierte Core-Übung im selben Pool wie die Bauchmaschine. Haltedauer in Sek.
+  bosu_core:        { equipment: "BOSU",          unilateral: false, muscles: ["Rumpf", "Core"],                  alternatives: ["bauchmaschine", "knee_tuck_ball"], metric: "duration", startDuration: 30 }
 };
 
 // Metadaten in EXERCISES mergen, mit konservativen Defaults für evtl. fehlende IDs.
@@ -888,6 +1206,14 @@ Object.entries(EXERCISES).forEach(([id, ex]) => {
   ex.unilateral   = meta.unilateral   ?? false;
   ex.muscles      = meta.muscles      ?? [];
   ex.alternatives = meta.alternatives ?? [];
+  // Optionales Startgewicht (kg); null = keins → Eingabefeld bleibt leer.
+  ex.startWeight  = meta.startWeight  ?? null;
+  // Mess-Modus: "weight" (Standard) oder "duration" (Haltedauer in Sekunden).
+  ex.metric       = meta.metric       ?? "weight";
+  // Invertierte Progression: getrackt wird ein Gegengewicht, weniger = besser.
+  ex.inverseProgression = meta.inverseProgression ?? false;
+  // Optionale Startdauer (Sek.) für Zeit-Übungen.
+  ex.startDuration = meta.startDuration ?? null;
   // Vorbelegte Notiz; von der Nutzerin editierbar (gespeichert pro Übung).
   // Reihenfolge: spezifische META-Notiz (z. B. Kabelrudern) → sonst der
   // Ausführungs-Tipp der Übung, damit beim Training direkt ein Hinweis steht.

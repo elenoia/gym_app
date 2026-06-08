@@ -38,6 +38,9 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  /* Doppeltipp-Zoom (und den 300 ms-Tap-Delay) unterbinden — wichtig beim
+     schnellen Tippen auf die ±-Stepper. Scrollen und Pinch-Zoom bleiben. */
+  touch-action: manipulation;
 }
 
 html, body {
@@ -201,6 +204,14 @@ h1, h2, h3 {
   font-variant-numeric: tabular-nums; min-height: 15px; }
 
 /* ── Warm-up-Chip ── */
+/* Session-Marker (Periode / wenig Energie / krank) — Toggle-Chips im Header */
+.wk-flags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 13px; }
+.wk-flag { font-size: 12.5px; font-weight: 600; color: var(--dim); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; transition: .15s;
+  -webkit-tap-highlight-color: transparent; }
+.wk-flag:active { transform: scale(0.96); }
+.wk-flag.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
 .warmup-banner { margin-bottom: 13px; }
 .warmup-chip { display: flex; align-items: center; justify-content: space-between; width: 100%;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 11px 15px; transition: background .15s; }
@@ -223,6 +234,18 @@ h1, h2, h3 {
 .warmup-check.done svg { display: block; }
 .warmup-check svg { display: none; }
 .warmup-text { flex: 1; line-height: 1.4; }
+/* Mobility/Cardio-Umschalter im Warm-up: erstes Item darunter ohne Trennlinie. */
+.wu-seg { margin: 2px 0 12px; }
+.wu-seg + .warmup-item { border-top: none; }
+/* Cardio-Eingabe (Distanz / Minuten) */
+.cardio-form { padding: 2px 2px 4px; }
+.cardio-fields { display: flex; gap: 10px; }
+.cardio-field { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cardio-lbl { font-size: 11.5px; font-weight: 600; color: var(--dim); display: flex; align-items: baseline; gap: 5px; }
+.cardio-lbl em { font-style: normal; font-weight: 500; color: var(--muted); font-size: 10.5px; }
+.cardio-input { display: flex; align-items: baseline; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 9px 11px; }
+.cardio-input input { width: 100%; min-width: 0; border: none; background: none; outline: none; color: var(--text); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cardio-input i { font-style: normal; font-size: 11px; font-weight: 600; color: var(--muted); flex: 0 0 auto; }
 
 /* ── Übungs-Karte (Atelier) ── */
 .exercise-list { display: flex; flex-direction: column; gap: 11px; }
@@ -258,6 +281,8 @@ h1, h2, h3 {
    nichts ragt mehr über den Rand. */
 .set.active { background: var(--accent-soft); padding: 11px 8px; margin: 0; flex-direction: column; align-items: stretch; gap: 10px; }
 .set-fields { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* Beschriftung über dem aktiven Satz (z. B. „Gegengewicht (kg)", „Haltedauer (Sek.)") */
+.set-cap { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--accent); padding: 0 2px; }
 .set-read { flex: 1; font-size: 15px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 .set-read i { font-style: normal; color: var(--muted); font-weight: 500; margin: 0 6px; }
 .set-mark { width: 30px; height: 30px; flex: 0 0 auto; border-radius: 9px; border: 1.6px solid var(--line); display: grid; place-items: center; color: var(--on-accent); }
@@ -394,6 +419,16 @@ h1, h2, h3 {
   color: var(--dim); font: inherit; font-size: 14px; font-weight: 600; transition: color .15s, border-color .15s; }
 .add-ex-btn:active { color: var(--accent); border-color: var(--accent-line); }
 .add-ex-btn svg { flex: 0 0 auto; }
+
+/* Impro-Tag: leerer Region-Slot als Auswahl-Karte */
+.ex-card.impro-slot { padding: 0; }
+.impro-choose { display: flex; align-items: center; justify-content: space-between; width: 100%;
+  padding: 16px 16px; gap: 12px; -webkit-tap-highlight-color: transparent; transition: background .15s; }
+.impro-choose:active { background: var(--surface-2); }
+.impro-slot-region { font-size: 15px; font-weight: 600; color: var(--text); }
+.impro-slot-hint { display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
+  font-weight: 600; color: var(--accent); }
+.impro-slot-hint svg { flex: 0 0 auto; }
 
 /* Badge „Zusatz heute" an spontan ergänzten Übungen */
 .ex-added { display: inline-block; margin-left: 8px; padding: 2px 8px; vertical-align: middle;
@@ -837,6 +872,25 @@ h1, h2, h3 {
 .calendar-session-delete:active {
   color: var(--danger, #e06c75);
   background: rgba(224, 108, 117, 0.12);
+}
+.calendar-session-warmup {
+  font-size: 12px;
+  color: var(--dim);
+  margin-bottom: 10px;
+}
+.calendar-session-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.calendar-session-flag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 3px 9px;
 }
 .calendar-session-ex {
   font-size: 13px;

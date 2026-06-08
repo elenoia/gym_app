@@ -38,19 +38,24 @@ const PLAN = {
       { id: "trizeps_kabel",    sets: 2, repsLow: 10, repsHigh: 12, rest: 60  }
     ]
   },
-  C: {
-    title: "Variation",
-    subtitle: "Backup-Tag",
-    exercises: [
-      { id: "beinbeuger",       sets: 3, repsLow: 10, repsHigh: 12, rest: 90  },
-      { id: "hip_thrust",       sets: 3, repsLow: 8,  repsHigh: 10, rest: 90 },
-      { id: "rudern_maschine",  sets: 3, repsLow: 8,  repsHigh: 10, rest: 90 },
-      { id: "rueckenstrecker",  sets: 3, repsLow: 10, repsHigh: 12, rest: 90  },
-      { id: "face_pulls",       sets: 3, repsLow: 12, repsHigh: 15, rest: 60  },
-      { id: "liegestuetze",     sets: 3, repsLow: 6,  repsHigh: 12, rest: 90  }
+  // Impro-Tag: keine festen Übungen, sondern Region-Slots. Beim Start wird pro
+  // Slot eine Übung aus dem Repertoire gewählt, gefiltert auf die passenden
+  // Muskelgruppen (muscles-Metadaten). Frisch pro Session, nicht klebrig.
+  // `sets`/`repsLow`/`repsHigh`/`rest` sind die Defaults für jede gewählte Übung.
+  I: {
+    title: "Impro",
+    subtitle: "Frei nach Region",
+    impro: true,
+    sets: 3, repsLow: 10, repsHigh: 12, rest: 90,
+    regions: [
+      { key: "beine_po",  label: "Beine & Po", muscles: ["Quadrizeps", "Gesäß", "Hamstrings", "Hüfte"] },
+      { key: "brust",     label: "Brust",      muscles: ["Brust"] },
+      { key: "ruecken",   label: "Rücken",     muscles: ["Latissimus", "Oberer Rücken", "Unterer Rücken", "Rhomboiden"] },
+      { key: "schultern", label: "Schultern",  muscles: ["Schultern", "Hintere Schulter", "Trapez"] },
+      { key: "rumpf",     label: "Rumpf",      muscles: ["Bauch", "Core", "Rumpf"] }
     ]
   },
-  // Punkt 5: zweiter, paralleler Plan nur mit Maschinen-Übungen — für Tage
+  // Zweiter, paralleler Plan nur mit Maschinen-Übungen — für Tage
   // ohne Lust auf freie Gewichte. Elenas Variante (Ganzkörper), alle Übungen
   // haben equipment === "Maschine".
   M: {
@@ -59,7 +64,7 @@ const PLAN = {
     exercises: [
       { id: "beinpresse",      sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
       { id: "abduktoren",      sets: 3, repsLow: 12, repsHigh: 15, rest: 60 },
-      { id: "brustpresse",     sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
+      { id: "vertikale_chestpress", sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
       { id: "rudern_maschine", sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
       { id: "schulterpresse",  sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
       { id: "reverse_fly",     sets: 3, repsLow: 12, repsHigh: 15, rest: 60 },
@@ -70,7 +75,8 @@ const PLAN = {
 
 // Plan-Badge-Icons im flachen Linienstil (Tabler-Glyphen, MIT, nachgezeichnet
 // als Inline-SVG). In currentColor → erben die Akzentfarbe vom Container.
-// Positionsbezogen (mascotFor): A=Aufbau, B=Aufrichtung, C=Variation, D=Maschinen.
+// Positionsbezogen (mascotFor): 0=Aufbau (Hantel), 1=Aufrichtung (Dehnen),
+// 2=Impro (Shuffle), 3=Maschinen (Zahnrad).
 const MASCOTS = {
   // A — Hantel / Langhantel (ti-barbell)
   A: `<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">

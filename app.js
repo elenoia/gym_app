@@ -147,9 +147,18 @@
     if (!w || typeof w !== "object" || !PLAN[w.day] || !Array.isArray(w.exercises)) return null;
     // Übungen mit zwischenzeitlich entfernter ID aussortieren (Render greift
     // direkt auf EXERCISES[id].name/.svg zu und würde sonst crashen).
-    w.exercises = w.exercises.filter(ex => ex && EXERCISES[ex.id]);
+    // Leere Impro-Slots (Platzhalter) bleiben erhalten, damit eine unterbrochene
+    // Zusammenstellung den Reload übersteht.
+    w.exercises = w.exercises.filter(ex => ex && (ex.placeholder || EXERCISES[ex.id]));
     if (!w.exercises.length) return null;
     if (!Array.isArray(w.warmupDone)) w.warmupDone = WARMUP_ITEMS.map(() => false);
+    // Warm-up-Auswahl defensiv normalisieren (alte aktive Session ohne Feld).
+    if (!w.warmup || typeof w.warmup !== "object") w.warmup = defaultWarmup();
+    if (w.warmup.mode !== "cardio") w.warmup.mode = "mobility";
+    if (!w.warmup.cardio || typeof w.warmup.cardio !== "object") w.warmup.cardio = defaultWarmup().cardio;
+    if (w.warmup.cardio.kind !== "laufband") w.warmup.cardio.kind = "rudern";
+    // Session-Marker defensiv (alte aktive Session ohne Feld).
+    if (!w.flags || typeof w.flags !== "object") w.flags = defaultFlags();
     return w;
   }
   // Editierbare Notizen pro Übung (global, nicht pro Session): { exId: "text" }
@@ -233,6 +242,11 @@
   }
   function setVolume(set, exMeta) {
     if (!set || !set.done) return 0;
+    // Zeit-Übung (Haltedauer) trägt keine kg-Tonnage. Flag entweder am Satz
+    // (gespeicherte Session) oder über die Übungs-Metadaten (laufendes Workout).
+    if (set.metric === "duration" || (exMeta && exMeta.metric === "duration")) return 0;
+    // Invertierte Übung (Gegengewicht ist keine bewegte Last) → 0 kg.
+    if (set.inverse === true || (exMeta && exMeta.inverseProgression)) return 0;
     // Körpergewicht: keine kg-Tonnage (nur Wdh. werden geloggt).
     if (exMeta && exMeta.equipment === "Körpergewicht") return 0;
     // Getrennt geloggte Seiten (links/rechts): nur wenn der Satz explizit als
@@ -267,6 +281,22 @@
   function setTopWeight(set) {
     const vals = [set.weight, set.weightL, set.weightR].map(num).filter(Number.isFinite);
     return vals.length ? Math.max(...vals) : NaN;
+  }
+  // Repräsentativer Wert einer Übung für den „zuletzt"-Carry-Forward (lastWeights):
+  //   • Zeit-Übung  → längste Haltedauer (Maximum der Sekunden)
+  //   • invertiert  → niedrigstes Gegengewicht (beste Leistung)
+  //   • normal      → schwerstes Gewicht
+  // Liefert null, wenn kein abgehakter Satz einen gültigen Wert hat.
+  function repValueForStore(ex) {
+    const meta = EXERCISES[ex.id] || {};
+    const done = ex.sets.filter(s => s.done);
+    if (meta.metric === "duration") {
+      const vals = done.map(s => num(s.duration)).filter(Number.isFinite);
+      return vals.length ? Math.max(...vals) : null;
+    }
+    const vals = done.map(setTopWeight).filter(Number.isFinite);
+    if (!vals.length) return null;
+    return meta.inverseProgression ? Math.min(...vals) : Math.max(...vals);
   }
   function formatKg(n) {
     const rounded = Math.round(n);
@@ -360,14 +390,44 @@
   function buildWorkoutExercise(exId, spec, last, lastWeights) {
     const meta = EXERCISES[exId] || {};
     const lastEx = last ? last.exercises.find(e => e.id === exId) : null;
-    const defaultWeight = lastWeights[exId] ?? "";
+    // Vorbelegtes Gewicht: zuletzt benutzt → sonst hinterlegtes Startgewicht
+    // (z. B. RDL 12 kg für die erste Einheit) → sonst leer.
+    const defaultWeight = lastWeights[exId] ?? meta.startWeight ?? "";
     // Wdh. werden mit der geplanten Mindestzahl vorbelegt (z. B. 10 bei „10–12"),
     // als echter, editierbarer Wert — sonst bliebe das Feld leer und der Satz
     // würde mit 0 in die Summe eingehen. Letztes Mal hat Vorrang, falls erfasst.
     const defaultReps = spec.repsLow ?? 10;
     const setCount = spec.sets || 3;
+
+    // Zeit-Übung: eigener, schlanker Satz-Aufbau (Sekunden statt Gewicht/Wdh.).
+    if (meta.metric === "duration") {
+      const defaultDuration = lastWeights[exId] ?? meta.startDuration ?? 30;
+      return {
+        id: exId,
+        metric: "duration",
+        unilateral: false,
+        split: false,
+        sets: Array.from({ length: setCount }, (_, i) => {
+          const ls = lastEx?.sets?.[i] || {};
+          return {
+            duration: ls.duration ?? defaultDuration,
+            durationBase: ls.duration ?? defaultDuration, // unreduzierter Zielwert
+            manual: false,
+            done: false,
+            lastDuration: ls.duration ?? null
+          };
+        }),
+        rest: (typeof spec.rest === "number" && spec.rest > 0) ? spec.rest : state.settings.defaultRest,
+        repsLow: spec.repsLow ?? 8,
+        repsHigh: spec.repsHigh ?? 12,
+        expanded: false
+      };
+    }
+
     return {
       id: exId,
+      metric: "weight",
+      inverseProgression: !!meta.inverseProgression,
       unilateral: !!meta.unilateral,
       // Beim einseitigen Loggen Seiten getrennt — Vorgabe folgt dem letzten Mal.
       split: meta.unilateral ? !!(lastEx?.sets?.some(s => s && s.split)) : false,
@@ -380,6 +440,11 @@
           repsL:   ls.repsL   ?? defaultReps,
           weightR: ls.weightR ?? "",
           repsR:   ls.repsR   ?? defaultReps,
+          // Unreduzierte Zielwerte (für den Energie-Abschlag, idempotent).
+          weightBase:  ls.weight  ?? defaultWeight,
+          weightLBase: ls.weightL ?? "",
+          weightRBase: ls.weightR ?? "",
+          manual: false,
           done: false,
           // „Zuletzt"-Hinweise pro Satz (können null sein)
           lastWeight:  ls.weight  ?? null,
@@ -410,7 +475,21 @@
       day: dayKey,
       startedAt: Date.now(),
       warmupDone: WARMUP_ITEMS.map(() => false),
-      exercises: day.exercises.map(ex => buildWorkoutExercise(ex.id, ex, last, lastWeights))
+      warmup: defaultWarmup(), // frische Auswahl pro Einheit (nicht klebrig)
+      flags: defaultFlags(),   // Periode/Energie/krank — frisch pro Einheit
+      impro: !!day.impro,
+      // Impro: leere Region-Slots (Platzhalter), die beim Start gefüllt werden.
+      // Sonst: feste Plan-Übungen.
+      exercises: day.impro
+        ? day.regions.map(r => ({
+            placeholder: true,
+            slotKey: r.key,
+            region: r.label,
+            muscles: r.muscles,
+            spec: { sets: day.sets, repsLow: day.repsLow, repsHigh: day.repsHigh, rest: day.rest },
+            sets: []
+          }))
+        : day.exercises.map(ex => buildWorkoutExercise(ex.id, ex, last, lastWeights))
     };
 
     saveActiveSession(); // überschreibt evtl. alte aktive Session → neue Einheit startet leer
@@ -418,10 +497,45 @@
     showView("workout");
   }
 
-  // ─── Warm-up als Checkliste ──────────────────────────
+  // ─── Warm-up: Mobility-Checkliste ODER Cardio ────────
+  // Pro Einheit wählbar (entweder/oder). Die Auswahl lebt in
+  // state.workout.warmup und wird über saveActiveSession gespiegelt
+  // (reload-sicher), aber bei jeder neuen Einheit frisch gesetzt — also
+  // kein „klebriger" Default (siehe startWorkout / defaultWarmup).
+  function defaultWarmup() {
+    return { mode: "mobility", cardio: { kind: "rudern", distance: "", minutes: "" } };
+  }
+  // Zahl deutsch formatiert (Tausenderpunkt / Dezimalkomma), wie sonst auch.
+  function numDe(n) {
+    const v = Number(n);
+    return Number.isFinite(v) ? v.toLocaleString("de-DE") : "";
+  }
+
   function renderWarmup() {
+    const wu = state.workout.warmup || (state.workout.warmup = defaultWarmup());
     const content = $("#warmup-content");
-    content.innerHTML = WARMUP_ITEMS.map((text, i) => `
+    const seg = `<div class="seg wu-seg" data-wu-mode>
+      <button class="${wu.mode === "cardio" ? "" : "on"}" data-mode="mobility">Mobility</button>
+      <button class="${wu.mode === "cardio" ? "on" : ""}" data-mode="cardio">Cardio</button>
+    </div>`;
+    content.innerHTML = seg + (wu.mode === "cardio" ? cardioFormHTML(wu.cardio) : mobilityListHTML());
+
+    // Mobility / Cardio umschalten
+    content.querySelectorAll("[data-wu-mode] button").forEach(b => {
+      b.addEventListener("click", () => {
+        wu.mode = b.dataset.mode === "cardio" ? "cardio" : "mobility";
+        saveActiveSession();
+        renderWarmup();
+      });
+    });
+
+    if (wu.mode === "cardio") bindCardioForm(content, wu.cardio);
+    else bindMobilityList(content);
+    updateWarmupLabel();
+  }
+
+  function mobilityListHTML() {
+    return WARMUP_ITEMS.map((text, i) => `
       <div class="warmup-item${state.workout.warmupDone[i] ? " done" : ""}" data-warmup="${i}">
         <button class="warmup-check${state.workout.warmupDone[i] ? " done" : ""}" aria-label="Warm-up-Punkt abhaken">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -429,6 +543,9 @@
         <span class="warmup-text">${text}</span>
       </div>
     `).join("");
+  }
+
+  function bindMobilityList(content) {
     content.querySelectorAll(".warmup-item").forEach(row => {
       const i = parseInt(row.dataset.warmup, 10);
       // Ganze Zeile ist Tap-Ziel (nicht nur der 26px-Button) — daumenfreundlich.
@@ -440,23 +557,166 @@
         saveActiveSession();
       });
     });
-    updateWarmupLabel();
+  }
+
+  // Distanz-Einheit folgt der Cardio-Art: Rudern in Metern, Laufband in km.
+  function cardioUnit(kind) { return kind === "laufband" ? "km" : "m"; }
+  function cardioFormHTML(c) {
+    const unit = cardioUnit(c.kind);
+    const distMode = c.kind === "laufband" ? "decimal" : "numeric";
+    const val = (v) => (v === "" || v == null) ? "" : v;
+    return `<div class="cardio-form">
+      <div class="seg" data-cardio-kind>
+        <button class="${c.kind === "laufband" ? "" : "on"}" data-kind="rudern">Rudern</button>
+        <button class="${c.kind === "laufband" ? "on" : ""}" data-kind="laufband">Laufband</button>
+      </div>
+      <div class="cardio-fields">
+        <label class="cardio-field">
+          <span class="cardio-lbl">Distanz</span>
+          <span class="cardio-input"><input class="val-input" type="text" inputmode="${distMode}" autocomplete="off" data-cardio="distance" value="${val(c.distance)}"/><i>${unit}</i></span>
+        </label>
+        <label class="cardio-field">
+          <span class="cardio-lbl">Minuten <em>optional</em></span>
+          <span class="cardio-input"><input class="val-input" type="text" inputmode="numeric" autocomplete="off" data-cardio="minutes" value="${val(c.minutes)}"/><i>min</i></span>
+        </label>
+      </div>
+    </div>`;
+  }
+
+  function bindCardioForm(content, c) {
+    // Art wechseln (ändert auch die Distanz-Einheit) → neu rendern.
+    content.querySelectorAll("[data-cardio-kind] button").forEach(b => {
+      b.addEventListener("click", () => {
+        c.kind = b.dataset.kind === "laufband" ? "laufband" : "rudern";
+        saveActiveSession();
+        renderWarmup();
+      });
+    });
+    // Distanz / Minuten — Komma als Dezimaltrenner erlaubt (z. B. 1,5 km).
+    content.querySelectorAll("[data-cardio]").forEach(input => {
+      const persist = (e) => {
+        const field = e.target.dataset.cardio;
+        const raw = e.target.value.trim().replace(",", ".");
+        c[field] = raw === "" ? "" : parseFloat(raw);
+        updateWarmupLabel();
+        saveActiveSession();
+      };
+      input.addEventListener("input", persist);
+      input.addEventListener("change", persist);
+    });
+  }
+
+  // Kurzfassung fürs Banner-Meta (z. B. „Rudern · 1.500 m").
+  function cardioShort(c) {
+    if (!c) return "";
+    const kind = c.kind === "laufband" ? "Laufband" : "Rudern";
+    const d = (c.distance === "" || c.distance == null) ? null : c.distance;
+    return d != null ? `${kind} · ${numDe(d)} ${cardioUnit(c.kind)}` : kind;
   }
 
   function updateWarmupLabel() {
+    const wu = state.workout.warmup || defaultWarmup();
+    const label = $("#warmup-label");
+    const meta = $("#warmup-meta");
+    if (wu.mode === "cardio") {
+      // Cardio hat bewusst keinen „erledigt"-Status — Meta zeigt nur die Werte.
+      label.textContent = "Warm-up";
+      meta.textContent = cardioShort(wu.cardio) || "Cardio";
+      $("#warmup-check").classList.remove("on");
+      $("#warmup-banner").classList.remove("wu-complete");
+      return;
+    }
     const total = WARMUP_ITEMS.length;
     const done = state.workout.warmupDone.filter(Boolean).length;
     const allDone = done === total;
-    $("#warmup-label").textContent = allDone ? "Warm-up erledigt" : "Warm-up";
-    $("#warmup-meta").textContent = `${done}/${total}`;
+    label.textContent = allDone ? "Warm-up erledigt" : "Warm-up";
+    meta.textContent = `${done}/${total}`;
     $("#warmup-check").classList.toggle("on", allDone);
     $("#warmup-banner").classList.toggle("wu-complete", allDone);
   }
 
-  // Bestes „letztes Mal" einer Übung (für den Overload-Hinweis) — höchstes
-  // erfasstes Gewicht und zugehörige Wdh., auch aus L/R.
+  // ─── Session-Marker (Periode / wenig Energie / krank) ─────
+  // Optionaler Tag pro Einheit. Frisch pro Session, via saveActiveSession
+  // gespiegelt, im Verlauf gespeichert. Ein aktiver Marker:
+  //   1. senkt die Zielgewichte automatisch um 15 % (reversibel, idempotent),
+  //   2. schützt den „zuletzt"-Referenzwert — eine markierte Einheit zieht die
+  //      Vorbelegung NICHT nach unten (niedrigeres Gewicht ≠ Rückschritt).
+  const FLAG_DEFS = [
+    { key: "periode", label: "Periode" },
+    { key: "wenigEnergie", label: "Wenig Energie" },
+    { key: "krank", label: "Krank" }
+  ];
+  const ENERGY_REDUCTION = 0.85; // −15 %
+  function defaultFlags() { return { periode: false, wenigEnergie: false, krank: false }; }
+  function anyFlag(f) { return !!(f && (f.periode || f.wenigEnergie || f.krank)); }
+  function activeFlagKeys(f) { return FLAG_DEFS.filter(d => f && f[d.key]).map(d => d.key); }
+  function flagLabel(key) { const d = FLAG_DEFS.find(x => x.key === key); return d ? d.label : key; }
+  function round05(n) { return Math.round(n * 2) / 2; }
+
+  // Wendet den Energie-Abschlag auf alle noch OFFENEN, nicht manuell geänderten
+  // Sätze an — immer aus dem unreduzierten Base-Wert gerechnet (idempotent &
+  // reversibel). Faktor 1.0 = kein Marker → stellt die Normalwerte wieder her.
+  // Richtungs-korrekt: invertierte Übung bekommt MEHR Gegengewicht, Zeit-Übung
+  // weniger Sekunden, Körpergewicht/Wdh. bleiben unangetastet.
+  function applyEnergyAdjustment() {
+    if (!state.workout) return;
+    const factor = anyFlag(state.workout.flags) ? ENERGY_REDUCTION : 1.0;
+    for (const ex of state.workout.exercises) {
+      const meta = EXERCISES[ex.id] || {};
+      for (const s of ex.sets) {
+        if (s.done || s.manual) continue;
+        if (meta.metric === "duration") {
+          if (s.durationBase !== "" && s.durationBase != null) {
+            s.duration = factor === 1 ? s.durationBase : Math.max(1, Math.round(s.durationBase * factor));
+          }
+          continue;
+        }
+        // invertiert: weniger Leistung = MEHR Gegengewicht → Faktor spiegeln.
+        const f = meta.inverseProgression ? (2 - factor) : factor;
+        const adj = (base) => (base === "" || base == null) ? base : round05(base * f);
+        s.weight  = adj(s.weightBase);
+        s.weightL = adj(s.weightLBase);
+        s.weightR = adj(s.weightRBase);
+      }
+    }
+  }
+
+  function renderFlags() {
+    const host = $("#workout-flags");
+    if (!host) return;
+    const f = state.workout.flags || (state.workout.flags = defaultFlags());
+    host.innerHTML = FLAG_DEFS.map(d =>
+      `<button class="wk-flag${f[d.key] ? " on" : ""}" data-flag="${d.key}" aria-pressed="${f[d.key] ? "true" : "false"}">${escapeHtml(d.label)}</button>`
+    ).join("");
+    host.querySelectorAll(".wk-flag").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const key = btn.dataset.flag;
+        f[key] = !f[key];
+        applyEnergyAdjustment(); // greift sofort auf die offenen Sätze
+        haptic(12);
+        saveActiveSession();
+        renderWorkout();
+      });
+    });
+  }
+
+  // Bestes „letztes Mal" einer Übung (für den Overload-Hinweis).
+  //   • Zeit-Übung  → längste zuletzt gehaltene Dauer  → { duration }
+  //   • invertiert  → NIEDRIGSTES Gegengewicht (beste Leistung) → { w, r }
+  //   • normal      → höchstes Gewicht + zugehörige Wdh.        → { w, r }
   function lastBest(ex) {
+    const meta = EXERCISES[ex.id] || {};
+    if (meta.metric === "duration") {
+      let best = null;
+      for (const s of ex.sets) {
+        const d = num(s.lastDuration);
+        if (Number.isFinite(d) && d > 0 && (!best || d > best.duration)) best = { duration: d };
+      }
+      return best;
+    }
+    const inverse = !!meta.inverseProgression;
     let best = null;
+    const isBetter = (w) => !best ? true : (inverse ? w < best.w : w > best.w);
     for (const s of ex.sets) {
       const cands = [
         { w: s.lastWeight, r: s.lastReps },
@@ -465,10 +725,28 @@
       ];
       for (const c of cands) {
         const w = num(c.w), r = num(c.r);
-        if (Number.isFinite(w) && (!best || w > best.w)) best = { w, r: Number.isFinite(r) ? r : null };
+        if (Number.isFinite(w) && w > 0 && isBetter(w)) best = { w, r: Number.isFinite(r) ? r : null };
       }
     }
     return best && best.w > 0 ? best : null;
+  }
+
+  // Formatiert das „Letztes Mal" je nach Mess-Modus.
+  //   normal → „60 kg × 10"   invertiert → „25 kg Gegengewicht × 8"   Zeit → „45 s"
+  function formatLastBest(ex, ob) {
+    if (!ob) return null;
+    const meta = EXERCISES[ex.id] || {};
+    if (meta.metric === "duration") return `${numDe(ob.duration)} s`;
+    const suffix = meta.inverseProgression ? " Gegengewicht" : "";
+    return `${numDe(ob.w)} kg${suffix}${ob.r != null ? ` × ${numDe(ob.r)}` : ""}`;
+  }
+
+  // Beschriftung über dem aktiven Satz, wo das Standard-„kg × Wdh." nicht passt.
+  function setCaption(ex) {
+    const meta = EXERCISES[ex.id] || {};
+    if (meta.metric === "duration") return "Haltedauer (Sek.)";
+    if (meta.inverseProgression) return "Gegengewicht (kg)";
+    return "";
   }
 
   // ─── Set-Rendering (Stepper-Logging) ─────────────────
@@ -486,6 +764,10 @@
 
   // Kompakte Lese-Darstellung eines Satzes (done/next).
   function setReadHTML(ex, set) {
+    if (ex.metric === "duration") {
+      const d = (set.duration === "" || set.duration == null) ? "–" : set.duration;
+      return `<span class="set-read">${d} s</span>`;
+    }
     if (ex.split) {
       const side = (w, r) => `${w ?? "–"}×${r ?? "–"}`;
       return `<span class="set-read">L ${side(set.weightL, set.repsL)}<i> · </i>R ${side(set.weightR, set.repsR)}</span>`;
@@ -515,6 +797,19 @@
     // Aktiver Satz → Stepper-Felder oben, Bestätigen als vollbreiter Button
     // darunter. So läuft nichts über den Kartenrand und das Tap-Ziel ist groß.
     const go = `<button class="set-go" data-go="${exIdx}-${sIdx}" aria-label="Satz ${sIdx + 1} bestätigen">${ICONS.check}<span>Satz fertig</span></button>`;
+    const cap = setCaption(ex);
+    const capHTML = cap ? `<span class="set-cap">${cap}</span>` : "";
+    // Zeit-Übung: ein einzelner Sekunden-Stepper (kein Gewicht, keine Wdh.).
+    if (ex.metric === "duration") {
+      return `<div class="set active" data-set="${sIdx}">
+        ${capHTML}
+        <div class="set-fields">
+          <span class="set-n">${sIdx + 1}</span>
+          ${stepperHTML("duration", set.duration, "s", exIdx, sIdx, 5)}
+        </div>
+        ${go}
+      </div>`;
+    }
     if (ex.split) {
       return `<div class="set active split" data-set="${sIdx}">
         <div class="set-fields">
@@ -528,6 +823,7 @@
       </div>`;
     }
     return `<div class="set active" data-set="${sIdx}">
+      ${capHTML}
       <div class="set-fields">
         <span class="set-n">${sIdx + 1}</span>
         ${stepperHTML("weight", set.weight, "kg", exIdx, sIdx, 2.5)}
@@ -566,11 +862,26 @@
     $("#workout-sub").textContent = dotted(day.subtitle);
     updateProgress();
     renderWarmup();
+    renderFlags();
 
     const total = state.workout.exercises.length;
     const list = $("#exercise-list");
     list.innerHTML = "";
     state.workout.exercises.forEach((ex, exIdx) => {
+      // Impro: leerer Region-Slot → Auswahl-Karte statt Übungskarte.
+      if (ex.placeholder) {
+        const slotCard = document.createElement("div");
+        slotCard.className = "ex-card impro-slot";
+        slotCard.innerHTML = `
+          <button class="impro-choose" data-slot="${exIdx}" aria-label="${escapeHtml(ex.region)}: Übung wählen">
+            <span class="impro-slot-region">${escapeHtml(ex.region)}</span>
+            <span class="impro-slot-hint">${ICONS.plus} Übung wählen</span>
+          </button>`;
+        slotCard.querySelector(".impro-choose").addEventListener("click", () => chooseImproExercise(exIdx));
+        list.appendChild(slotCard);
+        return;
+      }
+
       const meta = EXERCISES[ex.id];
       const activeIdx = ex.sets.findIndex(s => !s.done);
       const ob = lastBest(ex);
@@ -609,7 +920,7 @@
           <button class="ex-toggle" data-action="toggle">
             <span class="ex-meta">
               <h3>${escapeHtml(meta.name)}${ex.addedInSession ? `<span class="ex-added">Zusatz heute</span>` : ""}</h3>
-              <p>${escapeHtml(meta.target)} · ${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}</p>
+              <p>${escapeHtml(meta.target)} · ${ex.metric === "duration" ? `${ex.sets.length} × Halten` : `${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}`}</p>
             </span>
             <span class="ex-pos">${exIdx + 1}/${total}</span>
             <span class="ex-chev">${ICONS.chevD}</span>
@@ -617,13 +928,15 @@
         </div>
         <div class="ex-body">
           ${ex.unilateral ? segHTML(ex, exIdx) : ""}
-          ${ob ? `<div class="oh-hint">${ICONS.trend} Letztes Mal <b>${escapeHtml(String(ob.w))} kg${ob.r != null ? ` × ${escapeHtml(String(ob.r))}` : ""}</b></div>` : ""}
+          ${ob ? `<div class="oh-hint">${ICONS.trend} Letztes Mal <b>${escapeHtml(formatLastBest(ex, ob))}</b></div>` : ""}
           <div class="set-stack">
             ${ex.sets.map((set, sIdx) => setRowHTML(ex, set, exIdx, sIdx, activeIdx)).join("")}
           </div>
           ${noteHTML(ex)}
           <div class="ex-actions">
-            ${(meta.alternatives && meta.alternatives.length) ? `<button class="ex-swap" data-swap-ex="${exIdx}">${ICONS.swap} Tauschen</button>` : ""}
+            ${ex.slotKey
+              ? `<button class="ex-swap" data-impro-swap="${exIdx}">${ICONS.swap} Wechseln</button>`
+              : ((meta.alternatives && meta.alternatives.length) ? `<button class="ex-swap" data-swap-ex="${exIdx}">${ICONS.swap} Tauschen</button>` : "")}
             <button class="ex-skip" data-skip-ex="${exIdx}">${ICONS.skip} Heute auslassen</button>
           </div>
         </div>`;
@@ -648,6 +961,8 @@
           const set = state.workout.exercises[exI].sets[sI];
           const cur = num(set[field]);
           set[field] = Math.max(0, +(((Number.isFinite(cur) ? cur : 0) + d).toFixed(1)));
+          // Gewicht/Dauer von Hand verstellt → vom Energie-Abschlag ausnehmen.
+          if (field.startsWith("weight") || field === "duration") set.manual = true;
           const inp = card.querySelector(`.val-input[data-ex="${exI}"][data-set="${sI}"][data-field="${field}"]`);
           if (inp) inp.value = set[field];
           updateLiveTonnage();
@@ -659,8 +974,10 @@
       card.querySelectorAll(".val-input").forEach(input => {
         const persist = (e) => {
           const exI = +e.target.dataset.ex, sI = +e.target.dataset.set, field = e.target.dataset.field;
+          const set = state.workout.exercises[exI].sets[sI];
           const raw = e.target.value.trim().replace(",", ".");
-          state.workout.exercises[exI].sets[sI][field] = raw === "" ? "" : parseFloat(raw);
+          set[field] = raw === "" ? "" : parseFloat(raw);
+          if (field.startsWith("weight") || field === "duration") set.manual = true;
           updateLiveTonnage();
           saveActiveSession();
         };
@@ -693,9 +1010,12 @@
         });
       });
 
-      // Übung gegen Alternative tauschen
+      // Übung gegen Alternative tauschen (bzw. bei Impro: Region neu wählen)
       const swapBtn = card.querySelector(".ex-swap");
-      if (swapBtn) swapBtn.addEventListener("click", () => openSwap(+swapBtn.dataset.swapEx));
+      if (swapBtn) swapBtn.addEventListener("click", () => {
+        if (swapBtn.dataset.improSwap != null) chooseImproExercise(+swapBtn.dataset.improSwap);
+        else openSwap(+swapBtn.dataset.swapEx);
+      });
 
       // Übung heute auslassen (session-only, reversibel) → Karte zuklappen und
       // in den „übersprungen"-Zustand schalten.
@@ -718,9 +1038,13 @@
           const set = exObj.sets[sI];
           set.done = true;
           haptic(15); // kurzer Tick beim Abhaken
-          const top = setTopWeight(set);
-          if (Number.isFinite(top)) {
-            const lw = loadLastWeights(); lw[exObj.id] = top; saveLastWeights(lw);
+          // „Zuletzt"-Wert merken — metric-/invers-bewusst (Zeit: längste,
+          // invertiert: niedrigstes Gegengewicht, normal: schwerstes).
+          // An markierten Einheiten NICHT aktualisieren: ein schwacher Tag soll
+          // die Vorbelegung nicht nach unten ziehen (Periode/Energie/krank).
+          const rep = repValueForStore(exObj);
+          if (rep != null && !anyFlag(state.workout.flags)) {
+            const lw = loadLastWeights(); lw[exObj.id] = rep; saveLastWeights(lw);
           }
           startTimer(exObj.rest);
           renderWorkout();
@@ -917,6 +1241,12 @@
   function serializeSet(s, ex) {
     const n = (v) => (v === "" || v == null ? null : v);
     const out = { done: s.done };
+    // Zeit-Übung: nur die Haltedauer; Flag mitschreiben (Tonnage/Anzeige).
+    if (ex.metric === "duration") {
+      out.metric = "duration";
+      out.duration = n(s.duration);
+      return out;
+    }
     if (ex.split) {
       out.split = true;
       out.weightL = n(s.weightL);
@@ -928,16 +1258,42 @@
       out.reps = n(s.reps);
     }
     if (ex.unilateral) out.unilateral = true;
+    // Invertiert (Gegengewicht) mitschreiben, damit die Tonnage später 0 ist.
+    if (ex.inverseProgression) out.inverse = true;
     return out;
+  }
+
+  // Warm-up schlank für den Verlauf: bei Mobility nur der Modus, bei Cardio
+  // zusätzlich Art + Distanz/Minuten (leere Werte → null, kein NaN).
+  function serializeWarmup(wu) {
+    if (!wu || wu.mode !== "cardio") return { mode: "mobility" };
+    const c = wu.cardio || {};
+    const numOrNull = (v) => {
+      const n = Number(v);
+      return (v === "" || v == null || !Number.isFinite(n)) ? null : n;
+    };
+    return {
+      mode: "cardio",
+      cardio: {
+        kind: c.kind === "laufband" ? "laufband" : "rudern",
+        distance: numOrNull(c.distance),
+        minutes: numOrNull(c.minutes)
+      }
+    };
   }
 
   // ─── Workout beenden ─────────────────────────────────
   function finishWorkout() {
     const history = loadHistory();
+    const flagged = anyFlag(state.workout.flags);
+    // Unbefüllte Impro-Slots (Platzhalter) fließen nicht in den Verlauf ein.
+    const realExercises = state.workout.exercises.filter(ex => ex && !ex.placeholder && ex.id);
     const session = {
       day: state.workout.day,
       date: new Date().toISOString(),
-      exercises: state.workout.exercises.map(ex => ({
+      warmup: serializeWarmup(state.workout.warmup),
+      flags: activeFlagKeys(state.workout.flags), // [] wenn nichts markiert
+      exercises: realExercises.map(ex => ({
         id: ex.id,
         sets: ex.sets.map(s => serializeSet(s, ex))
       }))
@@ -946,17 +1302,18 @@
     if (history.length > 100) history.shift();
     saveHistory(history);
 
-    const lw = loadLastWeights();
-    state.workout.exercises.forEach(ex => {
-      const doneWeights = ex.sets
-        .filter(s => s.done)
-        .map(setTopWeight)
-        .filter(Number.isFinite);
-      if (doneWeights.length > 0) {
-        lw[ex.id] = Math.max(...doneWeights);
-      }
-    });
-    saveLastWeights(lw);
+    // Carry-Forward NUR bei nicht-markierten Einheiten — ein markierter Tag
+    // (Periode/Energie/krank) zieht die Vorbelegung nicht nach unten.
+    if (!flagged) {
+      const lw = loadLastWeights();
+      realExercises.forEach(ex => {
+        // metric-/invers-bewusst (Zeit: längste, invertiert: niedrigstes
+        // Gegengewicht, normal: schwerstes).
+        const rep = repValueForStore(ex);
+        if (rep != null) lw[ex.id] = rep;
+      });
+      saveLastWeights(lw);
+    }
 
     const tonnage = sessionTonnage(session);
     state.workout = null;
@@ -1117,6 +1474,7 @@
     const replacement = buildWorkoutExercise(newId, spec, getLastSessionForDay(state.currentDay), loadLastWeights());
     replacement.expanded = true;
     state.workout.exercises[exI] = replacement;
+    applyEnergyAdjustment(); // aktiven Marker auch auf die neue Übung anwenden
     renderWorkout();
   }
   // Spontan eine Übung NUR für diese Einheit ergänzen (session-only). Öffnet das
@@ -1140,6 +1498,7 @@
     ex.addedInSession = true;
     ex.expanded = true;
     state.workout.exercises.push(ex);
+    applyEnergyAdjustment(); // aktiven Marker auch auf die neue Übung anwenden
     renderWorkout();
     const cards = $("#exercise-list").children;
     const lastCard = cards[cards.length - 1];
@@ -1154,6 +1513,42 @@
       value: id, label: EXERCISES[id].name, sub: EXERCISES[id].target
     })));
     if (chosen) replaceExercise(exI, chosen);
+  }
+
+  // ─── Impro-Tag: Region-Slots füllen ──────────────────
+  // Öffnet einen nach Muskelgruppe gefilterten Picker für den Slot an exIdx.
+  // Bereits in anderen Slots gewählte Übungen werden ausgeblendet (keine Dopplung).
+  async function chooseImproExercise(exIdx) {
+    if (!state.workout) return;
+    const slot = state.workout.exercises[exIdx];
+    if (!slot) return;
+    const region = slot.region;
+    const muscles = slot.muscles || [];
+    const taken = new Set(
+      state.workout.exercises.filter((e, i) => i !== exIdx && e.id).map(e => e.id)
+    );
+    const choices = Object.keys(EXERCISES)
+      .filter(id => !taken.has(id))
+      .filter(id => (EXERCISES[id].muscles || []).some(m => muscles.includes(m)))
+      .map(id => ({ value: id, label: EXERCISES[id].name, sub: EXERCISES[id].target }))
+      .sort((a, b) => a.label.localeCompare(b.label, "de"));
+    if (!choices.length) {
+      await infoSheet({ title: region, message: "Keine passende Übung im Repertoire (alle schon gewählt?)." });
+      return;
+    }
+    const chosen = await pickSheet(`${region}: Übung wählen`, choices, { searchable: true });
+    if (!chosen) return;
+    const spec = slot.spec || { sets: 3, repsLow: 10, repsHigh: 12, rest: state.settings.defaultRest };
+    const ex = buildWorkoutExercise(chosen, spec, getLastSessionForDay(state.currentDay), loadLastWeights());
+    // Slot-Bezug mitführen, damit die Übung später wieder gewechselt werden kann.
+    ex.slotKey = slot.slotKey;
+    ex.region = region;
+    ex.muscles = muscles;
+    ex.spec = spec;
+    ex.expanded = true;
+    state.workout.exercises[exIdx] = ex;
+    applyEnergyAdjustment(); // aktiven Marker auch auf die neue Übung anwenden
+    renderWorkout();
   }
 
   // ─── Übungsdetail-Screen ─────────────────────────────
@@ -1179,9 +1574,9 @@
 
     const ob = lastBest(ex);
     const scheme = [
-      { l: "Sätze", v: `${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}` },
+      { l: "Sätze", v: ex.metric === "duration" ? `${ex.sets.length} × Halten` : `${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}` },
       { l: "Pause", v: fmtRest(ex.rest) },
-      { l: "Letztes", v: ob ? `${ob.w} kg` : "–" }
+      { l: "Letztes", v: ob ? formatLastBest(ex, ob) : "–" }
     ];
     $("#detail-scheme").innerHTML = scheme.map(s =>
       `<div class="scheme"><span class="ovl">${s.l}</span><b>${escapeHtml(String(s.v))}</b></div>`).join("");
@@ -1224,11 +1619,37 @@
   // Werte werden escaped, da sie (über Import) aus fremdem JSON stammen können.
   function formatSetSummary(s) {
     const v = (x) => escapeHtml(x ?? "–");
+    if (s.metric === "duration") return `${v(s.duration)} s`;
     if (s.split || s.weightL != null || s.weightR != null || s.repsL != null || s.repsR != null) {
       const side = (w, r) => `${v(w)}×${v(r)}`;
       return `L ${side(s.weightL, s.repsL)} · R ${side(s.weightR, s.repsR)}`;
     }
     return `${v(s.weight)} kg × ${v(s.reps)}`;
+  }
+
+  // Warm-up-Zeile für die Session-Detailansicht — zeigt, was gemacht wurde.
+  // Alte Sessions ohne Warm-up-Feld liefern "" → es wird nichts angezeigt.
+  function formatWarmup(wu) {
+    if (!wu || typeof wu !== "object") return "";
+    if (wu.mode === "cardio" && wu.cardio) {
+      const c = wu.cardio;
+      const kind = c.kind === "laufband" ? "Laufband" : "Rudern";
+      const unit = c.kind === "laufband" ? "km" : "m";
+      const parts = [];
+      if (c.distance != null) parts.push(`${numDe(c.distance)} ${unit}`);
+      if (c.minutes != null) parts.push(`${numDe(c.minutes)} min`);
+      return `Warm-up: ${kind}${parts.length ? " " + parts.join(", ") : ""}`;
+    }
+    if (wu.mode === "mobility") return "Warm-up: Mobility";
+    return "";
+  }
+
+  // Marker-Chips für die Session-Detailansicht. Alte Sessions ohne Feld → "".
+  function flagsHTML(flags) {
+    if (!Array.isArray(flags) || !flags.length) return "";
+    return `<div class="calendar-session-flags">${flags
+      .map(k => `<span class="calendar-session-flag">${escapeHtml(flagLabel(k))}</span>`)
+      .join("")}</div>`;
   }
 
   function groupHistoryByDay() {
@@ -1300,6 +1721,11 @@
         const day = PLAN[session.day];
         const dayTitle = escapeHtml(day ? day.title : session.day);
         const t = sessionTonnage(session);
+        const warmupLine = formatWarmup(session.warmup);
+        const warmupHtml = warmupLine
+          ? `<div class="calendar-session-warmup">${escapeHtml(warmupLine)}</div>`
+          : "";
+        const flagsHtml = flagsHTML(session.flags);
         const exHtml = session.exercises.map(ex => {
           const meta = EXERCISES[ex.id];
           const name = escapeHtml(meta ? meta.name : ex.id);
@@ -1323,6 +1749,8 @@
               </button>
             </div>
           </div>
+          ${flagsHtml}
+          ${warmupHtml}
           ${exHtml}
         </div>`;
       }).join("");
