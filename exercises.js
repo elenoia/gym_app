@@ -911,6 +911,45 @@ const EXERCISES = {
     </svg>`
   },
 
+  // ───── Brustpresse (schräg, Maschine) ─────
+  schraege_chestpress: {
+    name: "Brustpresse (schräg, Maschine)",
+    target: "Obere Brust, Trizeps, Schulter",
+    notes: "Leicht schräg zurückgelehnt sitzen, Schulterblätter hinten unten. Griffe nach vorn und schräg nach oben drücken (betont die obere Brust). Ellbogen am Ende nicht ganz durchstrecken.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Lehne, leicht zurückgelehnt -->
+        <line x1="26" y1="40" x2="34" y2="82" stroke="#3A3A5C" stroke-width="6"/>
+        <!-- Sitz -->
+        <rect x="32" y="78" width="24" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
+        <!-- Kopf am oberen Ende der Lehne -->
+        <circle cx="29" cy="42" r="5" fill="#D89D8E"/>
+        <!-- Torso entlang der Lehne -->
+        <line x1="31" y1="47" x2="37" y2="78" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Beine nach vorn -->
+        <line x1="37" y1="78" x2="56" y2="80" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="56" y1="80" x2="58" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Oberarm (Schulter ~ (35,52)) -->
+        <line x1="35" y1="52" x2="48" y2="50" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="48;44;48" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="50;54;50" dur="2.3s" repeatCount="indefinite"/>
+        </line>
+        <!-- Unterarm drückt nach vorn + schräg nach oben -->
+        <line x1="48" y1="50" x2="70" y2="36" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x1" values="48;44;48" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="y1" values="50;54;50" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="x2" values="70;52;70" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="36;50;36" dur="2.3s" repeatCount="indefinite"/>
+        </line>
+        <!-- Griff/Pad: vor + hoch beim Drücken -->
+        <rect x="68" y="30" width="6" height="14" rx="1.5" fill="#D89D8E">
+          <animate attributeName="x" values="68;50;68" dur="2.3s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="30;46;30" dur="2.3s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </svg>`
+  },
+
   // ───── Rumänisches Kreuzheben (Langhantel) ─────
   rdl: {
     name: "Rumänisches Kreuzheben",
@@ -1196,7 +1235,7 @@ const EXERCISES = {
 const EXERCISE_META = {
   beinpresse:       { equipment: "Maschine",      unilateral: false, muscles: ["Quadrizeps", "Gesäß"],            alternatives: ["beinstrecker"] },
   bankdruecken:     { equipment: "Freihantel",    unilateral: false, muscles: ["Brust", "Schultern", "Trizeps"], alternatives: ["butterfly", "liegestuetze"] },
-  butterfly:        { equipment: "Maschine",      unilateral: false, muscles: ["Brust"],                          alternatives: ["bankdruecken", "liegestuetze"] },
+  butterfly:        { equipment: "Maschine",      unilateral: false, muscles: ["Brust"],                          alternatives: ["bankdruecken", "liegestuetze", "schraege_chestpress"] },
   latzug_breit:     { equipment: "Kabel",         unilateral: false, muscles: ["Latissimus", "Oberer Rücken"],   alternatives: ["latzug_eng", "kabelrudern", "klimmzug_unterstuetzt"] },
   rueckenstrecker:  { equipment: "Körpergewicht", unilateral: false, muscles: ["Unterer Rücken", "Gesäß"],       alternatives: ["hip_thrust", "rdl"] },
   bauchmaschine:    { equipment: "Maschine",      unilateral: false, muscles: ["Bauch"],                          alternatives: ["knee_tuck_ball", "bosu_core"] },
@@ -1219,12 +1258,16 @@ const EXERCISE_META = {
   // Innenschenkel-Pendant zur Abduktoren-Maschine. Bilateral, knieschonend.
   // Nicht fest im Plan — über Hinzufügen/Tauschen/Impro (Region „Beine & Po") wählbar.
   adduktoren:       { equipment: "Maschine",      unilateral: false, muscles: ["Adduktoren"],                   alternatives: ["abduktoren", "beinpresse"], kneeFriendly: true },
-  brustpresse:      { equipment: "Maschine",      unilateral: false, muscles: ["Brust"],                         alternatives: ["vertikale_chestpress", "butterfly", "bankdruecken"] },
+  brustpresse:      { equipment: "Maschine",      unilateral: false, muscles: ["Brust"],                         alternatives: ["vertikale_chestpress", "butterfly", "bankdruecken", "schraege_chestpress"] },
   schulterpresse:   { equipment: "Maschine",      unilateral: false, muscles: ["Schultern"],                     alternatives: ["schulterdruecken", "ohp_langhantel"] },
   reverse_fly:      { equipment: "Maschine",      unilateral: false, muscles: ["Hintere Schulter", "Trapez"],   alternatives: ["face_pulls", "rear_delt_pull"] },
   // Maschinenplan: ersetzt die Brustpresse. Anderes Gerät → eigener, frischer
   // Gewichtsverlauf (neue ID, keine Historie). Gegenseitig mit Brustpresse verlinkt.
-  vertikale_chestpress: { equipment: "Maschine",  unilateral: false, muscles: ["Brust"],                         alternatives: ["brustpresse", "butterfly"] },
+  vertikale_chestpress: { equipment: "Maschine",  unilateral: false, muscles: ["Brust"],                         alternatives: ["brustpresse", "butterfly", "schraege_chestpress"] },
+  // Schräg-Brustpresse (obere Brust betont). Bilateral, knieschonend; ersetzt
+  // im Maschinenplan die vertikale Variante (die als Alternative bleibt).
+  // Gewichts-Erfassung wie die vertikale: gesamt (unilateral: false).
+  schraege_chestpress:  { equipment: "Maschine",  unilateral: false, muscles: ["Brust", "Trizeps", "Schultern"], alternatives: ["butterfly", "vertikale_chestpress", "brustpresse"], kneeFriendly: true },
   // Hintere Kette; Startgewicht 12 kg für die erste Einheit.
   rdl:              { equipment: "Langhantel",    unilateral: false, muscles: ["Gesäß", "Hamstrings", "Unterer Rücken"], alternatives: ["rueckenstrecker", "beinbeuger", "hip_thrust"], startWeight: 12 },
   // Freie Zug-Variante zum Kabelrudern (horizontaler Zug).

@@ -64,7 +64,7 @@ const PLAN = {
     exercises: [
       { id: "beinpresse",      sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
       { id: "abduktoren",      sets: 3, repsLow: 12, repsHigh: 15, rest: 60 },
-      { id: "vertikale_chestpress", sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
+      { id: "schraege_chestpress", sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
       { id: "rudern_maschine", sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
       { id: "schulterpresse",  sets: 3, repsLow: 10, repsHigh: 12, rest: 90 },
       { id: "reverse_fly",     sets: 3, repsLow: 12, repsHigh: 15, rest: 60 },
