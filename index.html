@@ -47,7 +47,9 @@
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <div class="workout-title-wrap"><h2>Verlauf</h2></div>
-        <div class="spacer"></div>
+        <button class="icon-btn" id="cal-add" aria-label="Training eintragen">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
       </header>
       <div class="calendar-nav">
         <button class="icon-btn" id="cal-prev" aria-label="Vorheriger Monat">
@@ -63,6 +65,18 @@
       </div>
       <div class="calendar-grid" id="cal-grid"></div>
       <div class="calendar-detail" id="cal-detail"></div>
+    </section>
+
+    <!-- Session-Editor: Training manuell eintragen / bearbeiten -->
+    <section id="view-session-editor" class="view">
+      <header class="workout-header">
+        <button class="icon-btn back-btn" id="editor-back" aria-label="Zurück">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="workout-title-wrap"><h2 id="editor-title">Training eintragen</h2></div>
+        <div class="spacer"></div>
+      </header>
+      <div id="editor-body"></div>
     </section>
 
     <!-- Workout (Vollbild-Wisch-Layout: je ein Screen pro Übung) -->

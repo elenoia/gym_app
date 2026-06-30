@@ -89,7 +89,8 @@
     workout: $("#view-workout"),
     settings: $("#view-settings"),
     calendar: $("#view-calendar"),
-    exercise: $("#view-exercise")
+    exercise: $("#view-exercise"),
+    sessionEditor: $("#view-session-editor")
   };
 
   // ─── Inline-Icons (stroke-based, currentColor) ───────
@@ -1797,6 +1798,9 @@
             <span class="calendar-session-day">${dayTitle}</span>
             <div class="calendar-session-head-right">
               <span class="calendar-session-tonnage">${formatKg(t)} kg</span>
+              <button class="calendar-session-edit" data-edit-date="${escapeHtml(session.date)}" aria-label="Training bearbeiten">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+              </button>
               <button class="calendar-session-delete" data-session-date="${escapeHtml(session.date)}" aria-label="Training löschen">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
               </button>
@@ -1810,6 +1814,9 @@
 
     host.querySelectorAll(".calendar-session-delete").forEach(btn => {
       btn.addEventListener("click", () => deleteSession(btn.dataset.sessionDate));
+    });
+    host.querySelectorAll(".calendar-session-edit").forEach(btn => {
+      btn.addEventListener("click", () => editSessionInEditor(btn.dataset.editDate));
     });
   }
 
@@ -1827,6 +1834,273 @@
     if (!ok) return;
     const history = loadHistory().filter(s => s.date !== dateISO);
     saveHistory(history);
+    rebuildLastWeights(); // Carry-Forward-Cache an den neuen Stand anpassen
+    renderCalendar();
+  }
+
+  // ─── Training manuell eintragen / bearbeiten ─────────
+  // Schreibt in DENSELBEN history-Store wie eine live geloggte Einheit
+  // (über serializeSet → exakt gleiches Format), sortiert die History
+  // chronologisch und baut den lastWeights-Cache neu auf. Kein paralleler Store.
+  let editorSession = null;
+  const TRASH_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+
+  // lastWeights aus der (chronologisch sortierten) History neu aufbauen —
+  // gleiche Regel wie finishWorkout: markierte Tage zählen nicht, pro Übung
+  // gewinnt der jüngste gültige Wert (repValueForStore).
+  function rebuildLastWeights() {
+    const lw = {};
+    const hist = loadHistory().slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    for (const session of hist) {
+      if (Array.isArray(session.flags) && session.flags.length) continue;
+      for (const ex of session.exercises) {
+        const rep = repValueForStore(ex); // arbeitet auf der gespeicherten {id,sets}-Form
+        if (rep != null) lw[ex.id] = rep;
+      }
+    }
+    saveLastWeights(lw);
+  }
+
+  // History chronologisch (aufsteigend) sichern + auf 100 kappen (älteste raus).
+  // Hält die Annahme „neueste am Ende" für getLastSessionForDay/Recap intakt.
+  function saveHistorySorted(history) {
+    history.sort((a, b) => new Date(a.date) - new Date(b.date));
+    while (history.length > 100) history.shift();
+    saveHistory(history);
+  }
+
+  // YYYY-MM-DD → eindeutiger ISO-Timestamp am selben (lokalen) Kalendertag.
+  // Mittag + Sekunden-Bump, falls an dem Tag schon Sessions liegen, damit `date`
+  // eindeutig bleibt (deleteSession/Ersetzen arbeiten per date).
+  function uniqueISOForDay(ymd, excludeISO) {
+    const [y, m, d] = ymd.split("-").map(Number);
+    const taken = new Set(loadHistory().filter(s => s.date !== excludeISO).map(s => s.date));
+    let sec = 0, iso;
+    do { iso = new Date(y, m - 1, d, 12, 0, sec, 0).toISOString(); sec++; } while (taken.has(iso));
+    return iso;
+  }
+
+  function emptyEditorSet(ex) {
+    return ex.metric === "duration"
+      ? { duration: "", done: true }
+      : { weight: "", reps: "", weightL: "", repsL: "", weightR: "", repsR: "", done: true };
+  }
+
+  // Editor-Übung aus einer gespeicherten Session-Übung rekonstruieren.
+  function editorExerciseFromStored(stored) {
+    const meta = EXERCISES[stored.id] || {};
+    const ex = buildWorkoutExercise(stored.id,
+      { sets: Math.max(1, stored.sets.length), repsLow: 10, repsHigh: 12, rest: state.settings.defaultRest },
+      null, {});
+    ex.split = !!(meta.unilateral && stored.sets.some(s => s && s.split));
+    ex.sets = stored.sets.map(s => ex.metric === "duration"
+      ? { duration: s.duration ?? "", done: true }
+      : {
+          weight:  s.weight  ?? "", reps:  s.reps  ?? "",
+          weightL: s.weightL ?? "", repsL: s.repsL ?? "",
+          weightR: s.weightR ?? "", repsR: s.repsR ?? "",
+          done: true
+        });
+    return ex;
+  }
+
+  // `ymd` ist ein lokaler "YYYY-MM-DD"-String (oder leer → heute). Bewusst kein
+  // ISO-Umweg, damit der Kalendertag nicht über Zeitzonen kippt.
+  function openSessionEditor(ymd) {
+    editorSession = { editingDate: null, day: Object.keys(PLAN)[0], dateInput: ymd || ymdKey(new Date()), exercises: [] };
+    renderSessionEditor();
+    showView("sessionEditor");
+  }
+
+  function editSessionInEditor(origISO) {
+    const session = loadHistory().find(s => s.date === origISO);
+    if (!session) return;
+    editorSession = {
+      editingDate: origISO,
+      day: PLAN[session.day] ? session.day : Object.keys(PLAN)[0],
+      dateInput: ymdKey(new Date(session.date)),
+      exercises: session.exercises.map(editorExerciseFromStored)
+    };
+    renderSessionEditor();
+    showView("sessionEditor");
+  }
+
+  async function editorAddExercise() {
+    if (!editorSession) return;
+    const present = new Set(editorSession.exercises.map(e => e.id));
+    const choices = Object.keys(EXERCISES)
+      .filter(id => !present.has(id))
+      .map(id => ({ value: id, label: EXERCISES[id].name, sub: EXERCISES[id].target }))
+      .sort((a, b) => a.label.localeCompare(b.label, "de"));
+    if (!choices.length) { await infoSheet({ title: "Alles dabei", message: "Alle Übungen sind bereits eingetragen." }); return; }
+    const chosen = await pickSheet("Übung hinzufügen", choices, { searchable: true });
+    if (!chosen) return;
+    // Felder leer starten (manuelle Eingabe), Struktur/Typ kommen aus der Übung.
+    const ex = buildWorkoutExercise(chosen, { sets: 3, repsLow: 10, repsHigh: 12, rest: state.settings.defaultRest }, null, {});
+    ex.sets = ex.sets.map(() => emptyEditorSet(ex));
+    editorSession.exercises.push(ex);
+    renderSessionEditor();
+  }
+
+  function editorSetRowHTML(ex, exIdx, sIdx) {
+    const s = ex.sets[sIdx];
+    const v = (x) => (x === "" || x == null) ? "" : escapeHtml(String(x));
+    const field = (f, label, val, step) =>
+      `<label class="editor-field"><span>${label}</span>
+        <input type="number" inputmode="decimal" min="0" step="${step}" data-ex="${exIdx}" data-set="${sIdx}" data-f="${f}" value="${v(val)}"></label>`;
+    let fields;
+    if (ex.metric === "duration") {
+      fields = field("duration", "Sek.", s.duration, "1");
+    } else if (ex.split) {
+      fields = field("weightL", "L kg", s.weightL, "0.5") + field("repsL", "L Wdh", s.repsL, "1")
+             + field("weightR", "R kg", s.weightR, "0.5") + field("repsR", "R Wdh", s.repsR, "1");
+    } else {
+      fields = field("weight", ex.inverseProgression ? "Gegengew." : "kg", s.weight, "0.5")
+             + field("reps", "Wdh", s.reps, "1");
+    }
+    return `<div class="editor-set">
+      <span class="editor-set-n">${sIdx + 1}</span>
+      <div class="editor-fields">${fields}</div>
+      <button class="editor-set-del" data-del-set="${exIdx}-${sIdx}" aria-label="Satz entfernen">${ICONS.minus}</button>
+    </div>`;
+  }
+
+  function renderSessionEditor() {
+    const host = $("#editor-body");
+    if (!host || !editorSession) return;
+    $("#editor-title").textContent = editorSession.editingDate ? "Training bearbeiten" : "Training eintragen";
+
+    const planChips = Object.keys(PLAN).map(k =>
+      `<button class="editor-plan-chip${k === editorSession.day ? " on" : ""}" data-plan="${k}">${escapeHtml(PLAN[k].title)}</button>`
+    ).join("");
+
+    const exHTML = editorSession.exercises.map((ex, i) => {
+      const meta = EXERCISES[ex.id] || {};
+      return `<div class="editor-ex">
+        <div class="editor-ex-head">
+          <span class="editor-ex-fig" aria-hidden="true">${meta.svg || ""}</span>
+          <div class="editor-ex-meta"><h3>${escapeHtml(meta.name || ex.id)}</h3><p>${escapeHtml(meta.target || "")}</p></div>
+          <button class="editor-ex-del" data-del-ex="${i}" aria-label="Übung entfernen">${TRASH_SVG}</button>
+        </div>
+        ${ex.unilateral ? `<div class="seg editor-seg">
+            <button data-split-ex="${i}" data-split="0" class="${ex.split ? "" : "on"}">Beidseitig</button>
+            <button data-split-ex="${i}" data-split="1" class="${ex.split ? "on" : ""}">L / R</button>
+          </div>` : ""}
+        <div class="editor-sets">${ex.sets.map((_, si) => editorSetRowHTML(ex, i, si)).join("")}</div>
+        <button class="editor-add-set" data-add-set="${i}">${ICONS.plus} Satz</button>
+      </div>`;
+    }).join("");
+
+    host.innerHTML = `
+      <div class="editor-top">
+        <label class="editor-date-row"><span>Datum</span>
+          <input type="date" id="editor-date" value="${escapeHtml(editorSession.dateInput)}"></label>
+      </div>
+      <p class="section-label">Plan</p>
+      <div class="editor-plans">${planChips}</div>
+      <p class="section-label">Übungen</p>
+      <div class="editor-ex-list">${exHTML || `<p class="editor-empty">Noch keine Übung — füge unten eine hinzu.</p>`}</div>
+      <button class="add-ex-btn" id="editor-add-ex">${ICONS.plus} Übung hinzufügen</button>
+      <button class="finish-btn" id="editor-save">Speichern</button>`;
+
+    $("#editor-date").addEventListener("change", (e) => { editorSession.dateInput = e.target.value; });
+    host.querySelectorAll(".editor-plan-chip").forEach(b => b.addEventListener("click", () => {
+      editorSession.day = b.dataset.plan; renderSessionEditor();
+    }));
+    host.querySelectorAll(".editor-field input").forEach(inp => {
+      inp.addEventListener("input", (e) => {
+        const exi = +e.target.dataset.ex, si = +e.target.dataset.set, f = e.target.dataset.f;
+        const raw = e.target.value.trim().replace(",", ".");
+        editorSession.exercises[exi].sets[si][f] = raw === "" ? "" : parseFloat(raw);
+      });
+    });
+    host.querySelectorAll("[data-split-ex]").forEach(b => b.addEventListener("click", () => {
+      editorSession.exercises[+b.dataset.splitEx].split = b.dataset.split === "1";
+      renderSessionEditor();
+    }));
+    host.querySelectorAll("[data-add-set]").forEach(b => b.addEventListener("click", () => {
+      const ex = editorSession.exercises[+b.dataset.addSet];
+      ex.sets.push(emptyEditorSet(ex));
+      renderSessionEditor();
+    }));
+    host.querySelectorAll("[data-del-set]").forEach(b => b.addEventListener("click", () => {
+      const [exi, si] = b.dataset.delSet.split("-").map(Number);
+      const ex = editorSession.exercises[exi];
+      ex.sets.splice(si, 1);
+      if (!ex.sets.length) ex.sets.push(emptyEditorSet(ex));
+      renderSessionEditor();
+    }));
+    host.querySelectorAll("[data-del-ex]").forEach(b => b.addEventListener("click", () => {
+      editorSession.exercises.splice(+b.dataset.delEx, 1); renderSessionEditor();
+    }));
+    $("#editor-add-ex").addEventListener("click", editorAddExercise);
+    $("#editor-save").addEventListener("click", saveSessionFromEditor);
+  }
+
+  async function saveSessionFromEditor() {
+    if (!editorSession) return;
+    if (!editorSession.dateInput) { await infoSheet({ title: "Datum fehlt", message: "Bitte ein Datum wählen." }); return; }
+
+    const problems = [];
+    const exercisesOut = [];
+    editorSession.exercises.forEach((ex) => {
+      const meta = EXERCISES[ex.id] || {};
+      const name = meta.name || ex.id;
+      const keep = [];
+      ex.sets.forEach((s, si) => {
+        const label = `${name} · Satz ${si + 1}`;
+        if (ex.metric === "duration") {
+          if (s.duration === "" || s.duration == null) return; // leerer Satz → ignorieren
+          const d = num(s.duration);
+          if (!Number.isFinite(d) || d < 1) { problems.push(`${label}: Dauer ≥ 1 Sek.`); return; }
+          keep.push({ duration: d, done: true });
+        } else if (ex.split) {
+          const allEmpty = [s.weightL, s.repsL, s.weightR, s.repsR].every(x => x === "" || x == null);
+          if (allEmpty) return;
+          const wl = num(s.weightL), rl = num(s.repsL), wr = num(s.weightR), rr = num(s.repsR);
+          if (!Number.isFinite(rl) || rl < 1 || !Number.isFinite(rr) || rr < 1) { problems.push(`${label}: Wdh. je Seite ≥ 1`); return; }
+          if ((s.weightL !== "" && s.weightL != null && (!Number.isFinite(wl) || wl < 0)) ||
+              (s.weightR !== "" && s.weightR != null && (!Number.isFinite(wr) || wr < 0))) { problems.push(`${label}: Gewicht nicht negativ`); return; }
+          keep.push({ split: true, weightL: s.weightL === "" ? "" : wl, repsL: rl, weightR: s.weightR === "" ? "" : wr, repsR: rr, done: true });
+        } else {
+          const empty = (s.weight === "" || s.weight == null) && (s.reps === "" || s.reps == null);
+          if (empty) return;
+          const w = num(s.weight), r = num(s.reps);
+          if (!Number.isFinite(r) || r < 1) { problems.push(`${label}: Wiederholungen ≥ 1`); return; }
+          if (s.weight !== "" && s.weight != null && (!Number.isFinite(w) || w < 0)) { problems.push(`${label}: Gewicht nicht negativ`); return; }
+          keep.push({ weight: s.weight === "" ? "" : w, reps: r, done: true });
+        }
+      });
+      if (keep.length) exercisesOut.push({ ex, sets: keep });
+    });
+
+    if (problems.length) { await infoSheet({ title: "Bitte prüfen", message: problems.slice(0, 6).join("\n") }); return; }
+    if (!exercisesOut.length) { await infoSheet({ title: "Nichts einzutragen", message: "Füge mindestens eine Übung mit einem gültigen Satz hinzu." }); return; }
+
+    const iso = uniqueISOForDay(editorSession.dateInput, editorSession.editingDate);
+    const session = {
+      day: editorSession.day,
+      date: iso,
+      warmup: { mode: "mobility" },
+      flags: [],
+      exercises: exercisesOut.map(({ ex, sets }) => ({
+        id: ex.id,
+        sets: sets.map(s => serializeSet(s, ex)) // exakt das Live-Format
+      }))
+    };
+
+    let history = loadHistory();
+    if (editorSession.editingDate) history = history.filter(s => s.date !== editorSession.editingDate);
+    history.push(session);
+    saveHistorySorted(history);   // chronologisch einsortieren
+    rebuildLastWeights();         // Carry-Forward-Cache neu berechnen
+
+    const saved = new Date(iso);
+    editorSession = null;
+    calendarState.selectedDayKey = ymdKey(saved);
+    calendarState.year = saved.getFullYear();
+    calendarState.month = saved.getMonth();
+    showView("calendar");
     renderCalendar();
   }
 
@@ -1964,6 +2238,12 @@
       showView("calendar");
     });
     $("#back-from-calendar").addEventListener("click", () => showView("home"));
+
+    // Training manuell eintragen (Datum = aktuell gewählter Tag, sonst heute)
+    $("#cal-add").addEventListener("click", () => {
+      openSessionEditor(calendarState.selectedDayKey || ymdKey(new Date()));
+    });
+    $("#editor-back").addEventListener("click", () => { showView("calendar"); renderCalendar(); });
 
     // Übungsdetail
     $("#detail-back").addEventListener("click", () => { renderWorkout(); showView("workout"); });

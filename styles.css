@@ -952,3 +952,57 @@ h1, h2, h3 {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
+
+/* ── Session-Editor: Training manuell eintragen / bearbeiten ── */
+#view-session-editor { padding-bottom: 120px; }
+.editor-top { margin: 4px 0 18px; }
+.editor-date-row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 12px 15px; }
+.editor-date-row span { font-size: 14px; font-weight: 600; color: var(--dim); }
+.editor-date-row input[type="date"] { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-xs);
+  color: var(--text); font: inherit; font-size: 15px; padding: 8px 11px; min-width: 0; }
+.editor-date-row input[type="date"]:focus { outline: none; border-color: var(--accent); }
+
+.editor-plans { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.editor-plan-chip { font-size: 13px; font-weight: 600; color: var(--dim); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; transition: .15s; -webkit-tap-highlight-color: transparent; }
+.editor-plan-chip:active { transform: scale(0.96); }
+.editor-plan-chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+.editor-ex-list { display: flex; flex-direction: column; gap: 12px; }
+.editor-empty { font-size: 13px; color: var(--muted); padding: 6px 2px; }
+.editor-ex { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; }
+.editor-ex-head { display: flex; align-items: center; gap: 12px; }
+.editor-ex-fig { width: 46px; height: 46px; flex: 0 0 auto; border-radius: 12px; background: var(--bg); padding: 5px; overflow: hidden; }
+.editor-ex-fig svg { width: 100%; height: 100%; display: block; }
+.editor-ex-meta { flex: 1; min-width: 0; }
+.editor-ex-meta h3 { margin: 0; font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; }
+.editor-ex-meta p { margin: 2px 0 0; font-size: 12px; color: var(--dim); }
+.editor-ex-del { width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; color: var(--muted);
+  border-radius: 10px; transition: color .15s, background .15s; }
+.editor-ex-del:active { color: var(--accent); background: var(--surface-2); }
+.editor-seg { margin: 12px 0 4px; }
+
+.editor-sets { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; }
+.editor-set { display: flex; align-items: center; gap: 10px; }
+.editor-set-n { width: 16px; flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.editor-fields { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.editor-field { flex: 1; min-width: 64px; display: flex; flex-direction: column; gap: 4px; }
+.editor-field span { font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.editor-field input { width: 100%; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-xs);
+  color: var(--text); font: inherit; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; padding: 9px 10px; }
+.editor-field input:focus { outline: none; border-color: var(--accent); }
+.editor-set-del { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 9px; transition: color .15s, border-color .15s; }
+.editor-set-del:active { color: var(--accent); border-color: var(--accent-line); }
+
+.editor-add-set { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 8px 12px;
+  background: transparent; border: 1px dashed var(--line); border-radius: var(--r-xs); color: var(--dim); font: inherit; font-size: 13px; font-weight: 600; }
+.editor-add-set:active { color: var(--accent); border-color: var(--accent-line); }
+.editor-add-set svg { width: 16px; height: 16px; flex: 0 0 auto; }
+#editor-add-ex { margin-top: 16px; }
+
+/* Bearbeiten-Button im Kalender-Detail (neben Löschen) */
+.calendar-session-edit { width: 30px; height: 30px; display: grid; place-items: center; color: var(--muted);
+  border-radius: 8px; transition: color .15s, background .15s; }
+.calendar-session-edit:active { color: var(--accent); background: var(--surface); }
