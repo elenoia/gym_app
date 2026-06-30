@@ -90,7 +90,8 @@
     settings: $("#view-settings"),
     calendar: $("#view-calendar"),
     exercise: $("#view-exercise"),
-    sessionEditor: $("#view-session-editor")
+    sessionEditor: $("#view-session-editor"),
+    stats: $("#view-stats")
   };
 
   // ─── Inline-Icons (stroke-based, currentColor) ───────
@@ -2104,6 +2105,247 @@
     renderCalendar();
   }
 
+  // ─── Statistik / Auswertung ──────────────────────────
+  // Komplett read-only: liest nur aus `history` + EXERCISES-Metadaten und nutzt
+  // die vorhandenen Berechnungen (repValueForStore, sessionTonnage) wieder.
+  let statsExId = null;
+
+  // Maß/Einheit je Übung — metrik-bewusst (kg / Sekunden / Gegengewicht).
+  function metricInfo(meta) {
+    if (meta.metric === "duration") return { unit: "s", caption: "Haltedauer (Sek.)", lowerBetter: false };
+    if (meta.inverseProgression) return { unit: "kg", caption: "Gegengewicht (niedriger = besser)", lowerBetter: true };
+    return { unit: "kg", caption: "Arbeitsgewicht (höchstes Satzgewicht)", lowerBetter: false };
+  }
+
+  // Eine Auswertungs-Datenbasis in EINEM Durchlauf über die (sortierte) History:
+  //   ex[id] = { series:[{date,value}], bestReps, bestRepsDate }
+  // series = Arbeitswert je Session (repValueForStore) — exakt wie sonst.
+  function statsModel() {
+    const hist = loadHistory().slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    const ex = {};
+    for (const s of hist) {
+      const d = new Date(s.date);
+      for (const e of s.exercises) {
+        const m = ex[e.id] || (ex[e.id] = { series: [], bestReps: null, bestRepsDate: null });
+        const v = repValueForStore(e);
+        if (v != null) m.series.push({ date: d, value: v });
+        for (const st of e.sets) {
+          if (!st.done) continue;
+          const r = Math.max(num(st.reps) || 0, num(st.repsL) || 0, num(st.repsR) || 0);
+          if (Number.isFinite(r) && r > 0 && (m.bestReps == null || r > m.bestReps)) { m.bestReps = r; m.bestRepsDate = d; }
+        }
+      }
+    }
+    return { hist, ex };
+  }
+
+  function fmtDateShort(d) {
+    return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
+  }
+  function fmtDayMonth(d) {
+    return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+  function mondayOf(d) {
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+    return x;
+  }
+
+  // Handgemachtes Linien-/Punkt-SVG (responsive via viewBox). Klassen werden in
+  // styles.css gestylt → hoher Kontrast + Theming.
+  function lineChartSVG(series) {
+    const W = 320, H = 180, padL = 40, padR = 12, padT = 14, padB = 26;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const n = series.length;
+    const values = series.map(p => p.value);
+    let yMin = Math.min(...values), yMax = Math.max(...values);
+    const dataMin = yMin;
+    if (yMin === yMax) { const p = Math.max(1, Math.abs(yMax) * 0.1); yMin -= p; yMax += p; }
+    else { const p = (yMax - yMin) * 0.12; yMin -= p; yMax += p; }
+    if (dataMin >= 0 && yMin < 0) yMin = 0;
+    const x = i => n === 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW;
+    const y = v => padT + (1 - (v - yMin) / (yMax - yMin || 1)) * plotH;
+    const ticks = [yMax, (yMin + yMax) / 2, yMin];
+    let grid = "", ylabels = "";
+    for (const t of ticks) {
+      const yy = y(t).toFixed(1);
+      grid += `<line class="chart-grid" x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}"/>`;
+      ylabels += `<text class="chart-label" x="${padL - 6}" y="${(parseFloat(yy) + 3).toFixed(1)}" text-anchor="end">${numDe(Math.round(t))}</text>`;
+    }
+    const idxs = n <= 1 ? [0] : (n === 2 ? [0, 1] : [0, Math.floor((n - 1) / 2), n - 1]);
+    let xlabels = "";
+    for (const i of idxs) xlabels += `<text class="chart-xlabel" x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${fmtDayMonth(series[i].date)}</text>`;
+    const pts = series.map((p, i) => `${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join(" ");
+    let area = "", line = "";
+    if (n > 1) {
+      area = `<polygon class="chart-area" points="${x(0).toFixed(1)},${(padT + plotH).toFixed(1)} ${pts} ${x(n - 1).toFixed(1)},${(padT + plotH).toFixed(1)}"/>`;
+      line = `<polyline class="chart-line" points="${pts}"/>`;
+    }
+    const dots = series.map((p, i) => `<circle class="chart-pt" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="${n > 24 ? 2 : 3}"/>`).join("");
+    const axis = `<line class="chart-axis" x1="${padL}" y1="${padT}" x2="${padL}" y2="${(padT + plotH).toFixed(1)}"/>`
+      + `<line class="chart-axis" x1="${padL}" y1="${(padT + plotH).toFixed(1)}" x2="${W - padR}" y2="${(padT + plotH).toFixed(1)}"/>`;
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf">${grid}${area}${axis}${line}${dots}${ylabels}${xlabels}</svg>`;
+  }
+
+  // Kleines Balken-SVG (Volumen pro Woche).
+  function barChartSVG(bars) {
+    const W = 320, H = 130, padL = 8, padR = 8, padT = 14, padB = 22;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const max = Math.max(...bars.map(b => b.value), 1);
+    const n = bars.length, gap = 4;
+    const bw = Math.max(4, (plotW - gap * (n - 1)) / n);
+    let rects = "", labels = "";
+    bars.forEach((b, i) => {
+      const h = (b.value / max) * plotH;
+      const xx = padL + i * (bw + gap), yy = padT + plotH - h;
+      rects += `<rect class="chart-bar" x="${xx.toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, h).toFixed(1)}" rx="2"/>`;
+      if (i === 0 || i === n - 1 || i === Math.floor((n - 1) / 2)) labels += `<text class="chart-xlabel" x="${(xx + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${b.label}</text>`;
+    });
+    const base = `<line class="chart-axis" x1="${padL}" y1="${(padT + plotH).toFixed(1)}" x2="${W - padR}" y2="${(padT + plotH).toFixed(1)}"/>`;
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Volumen pro Woche">${base}${rects}${labels}</svg>`;
+  }
+
+  async function pickStatsExercise(model) {
+    const ids = Object.keys(model.ex).filter(id => model.ex[id].series.length && EXERCISES[id])
+      .sort((a, b) => EXERCISES[a].name.localeCompare(EXERCISES[b].name, "de"));
+    if (!ids.length) return;
+    const chosen = await pickSheet("Übung wählen", ids.map(id => ({
+      value: id, label: EXERCISES[id].name, sub: EXERCISES[id].target
+    })), { searchable: true });
+    if (chosen) { statsExId = chosen; renderStats(); }
+  }
+
+  function renderStats() {
+    const host = $("#stats-body");
+    if (!host) return;
+    const model = statsModel();
+    const hist = model.hist;
+
+    if (!hist.length) {
+      host.innerHTML = `<div class="stats-empty">
+        <p class="stats-empty-title">Noch keine Daten</p>
+        <p class="stats-empty-text">Trag ein paar Trainings ein – dann erscheinen hier dein Gewichtsverlauf, Bestleistungen und mehr.</p>
+      </div>`;
+      return;
+    }
+
+    // ── Übersicht / Frequenz ──
+    const now = new Date();
+    const thisMonth = hist.filter(s => { const d = new Date(s.date); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); }).length;
+    const first = new Date(hist[0].date), last = new Date(hist[hist.length - 1].date);
+    const weekSpan = Math.max(1, Math.round((last - first) / (7 * 864e5)) + 1);
+    const perWeek = (hist.length / weekSpan).toFixed(1).replace(".", ",");
+    const summary = [
+      { n: String(hist.length), l: "Trainings" },
+      { n: String(thisMonth), l: "diesen Monat" },
+      { n: perWeek, l: "Ø / Woche" }
+    ];
+
+    // ── Gewichtsverlauf (gewählte Übung) ──
+    const seriesIds = Object.keys(model.ex).filter(id => model.ex[id].series.length && EXERCISES[id]);
+    if (!statsExId || !model.ex[statsExId] || !model.ex[statsExId].series.length) {
+      // Default: Übung mit den meisten Datenpunkten.
+      statsExId = seriesIds.sort((a, b) => model.ex[b].series.length - model.ex[a].series.length)[0] || null;
+    }
+    let chartHTML;
+    if (!statsExId) {
+      chartHTML = `<p class="stats-note">Noch keine Übung mit auswertbarem Gewicht/Dauer. Übungen, die nur Wiederholungen erfassen (z. B. Körpergewicht), erscheinen unten bei den Bestleistungen.</p>`;
+    } else {
+      const meta = EXERCISES[statsExId];
+      const info = metricInfo(meta);
+      const series = model.ex[statsExId].series;
+      const vals = series.map(p => p.value);
+      const best = info.lowerBetter ? Math.min(...vals) : Math.max(...vals);
+      const latest = series[series.length - 1].value;
+      chartHTML = `
+        <button class="stats-picker" id="stats-pick">
+          <span class="stats-picker-name">${escapeHtml(meta.name)}</span>
+          <span class="stats-picker-chev">${ICONS.chevD}</span>
+        </button>
+        <p class="stats-caption">${escapeHtml(info.caption)}</p>
+        <div class="chart">${lineChartSVG(series)}</div>
+        <div class="stats-kv">
+          <div><span class="stats-kv-n">${numDe(latest)} ${info.unit}</span><span class="stats-kv-l">zuletzt</span></div>
+          <div><span class="stats-kv-n">${numDe(best)} ${info.unit}</span><span class="stats-kv-l">Bestwert</span></div>
+          <div><span class="stats-kv-n">${series.length}</span><span class="stats-kv-l">Einheiten</span></div>
+        </div>`;
+    }
+
+    // ── Bestleistungen (PR) je Übung ──
+    const prIds = Object.keys(model.ex).filter(id => EXERCISES[id])
+      .sort((a, b) => EXERCISES[a].name.localeCompare(EXERCISES[b].name, "de"));
+    const prRows = prIds.map(id => {
+      const meta = EXERCISES[id], m = model.ex[id], info = metricInfo(meta);
+      let valStr, dateStr;
+      if (m.series.length) {
+        const vals = m.series.map(p => p.value);
+        const bestVal = info.lowerBetter ? Math.min(...vals) : Math.max(...vals);
+        const bestPt = m.series.find(p => p.value === bestVal);
+        valStr = `${numDe(bestVal)} ${info.unit}`;
+        dateStr = bestPt ? fmtDateShort(bestPt.date) : "";
+      } else if (m.bestReps != null) {
+        valStr = `${numDe(m.bestReps)} Wdh.`;
+        dateStr = m.bestRepsDate ? fmtDateShort(m.bestRepsDate) : "";
+      } else return "";
+      return `<div class="pr-row">
+        <span class="pr-name">${escapeHtml(meta.name)}</span>
+        <span class="pr-val">${valStr}</span>
+        <span class="pr-date">${dateStr}</span>
+      </div>`;
+    }).filter(Boolean).join("");
+
+    // ── Volumen pro Woche (letzte 10) ──
+    const wkMap = {};
+    for (const s of hist) {
+      const mo = mondayOf(new Date(s.date)), key = ymdKey(mo);
+      (wkMap[key] || (wkMap[key] = { mo, total: 0 })).total += sessionTonnage(s);
+    }
+    const weeks = Object.values(wkMap).sort((a, b) => a.mo - b.mo).slice(-10);
+    const hasVolume = weeks.some(w => w.total > 0);
+    const volHTML = hasVolume
+      ? `<div class="chart">${barChartSVG(weeks.map(w => ({ label: fmtDayMonth(w.mo), value: w.total })))}</div>
+         <p class="stats-caption">Bewegte kg je Kalenderwoche</p>`
+      : `<p class="stats-note">Noch kein Volumen erfasst (nur Wiederholungen/Zeit).</p>`;
+
+    // ── Muskelgruppen-Verteilung (abgehakte Sätze) ──
+    const muscle = {};
+    for (const s of hist) for (const e of s.exercises) {
+      const muscles = (EXERCISES[e.id] && EXERCISES[e.id].muscles) || [];
+      const done = e.sets.filter(x => x.done).length;
+      if (!done) continue;
+      for (const mu of muscles) muscle[mu] = (muscle[mu] || 0) + done;
+    }
+    const muscleRows = Object.entries(muscle).sort((a, b) => b[1] - a[1]);
+    const muscleMax = muscleRows.length ? muscleRows[0][1] : 1;
+    const muscleHTML = muscleRows.length
+      ? muscleRows.map(([mu, c]) => `<div class="mg-row">
+          <span class="mg-name">${escapeHtml(mu)}</span>
+          <span class="mg-bar"><span class="mg-fill" style="width:${Math.round((c / muscleMax) * 100)}%"></span></span>
+          <span class="mg-count">${c}</span>
+        </div>`).join("")
+      : `<p class="stats-note">Noch keine Sätze erfasst.</p>`;
+
+    host.innerHTML = `
+      <div class="stats-summary">
+        ${summary.map(c => `<div class="stats-cell"><span class="stats-n">${escapeHtml(c.n)}</span><span class="stats-l">${escapeHtml(c.l)}</span></div>`).join("")}
+      </div>
+
+      <p class="section-label">Gewichtsverlauf</p>
+      <div class="stats-card">${chartHTML}</div>
+
+      <p class="section-label">Bestleistungen</p>
+      <div class="stats-card pr-list">${prRows || `<p class="stats-note">Noch keine Bestleistungen.</p>`}</div>
+
+      <p class="section-label">Volumen pro Woche</p>
+      <div class="stats-card">${volHTML}</div>
+
+      <p class="section-label">Muskelgruppen</p>
+      <div class="stats-card mg-list">${muscleHTML}</div>`;
+
+    const pick = $("#stats-pick");
+    if (pick) pick.addEventListener("click", () => pickStatsExercise(model));
+  }
+
   // ─── Settings-Ansicht ────────────────────────────────
   function renderSettings() {
     $("#setting-sound").checked = state.settings.sound;
@@ -2238,6 +2480,10 @@
       showView("calendar");
     });
     $("#back-from-calendar").addEventListener("click", () => showView("home"));
+
+    // Statistik
+    $("#open-stats").addEventListener("click", () => { renderStats(); showView("stats"); });
+    $("#back-from-stats").addEventListener("click", () => showView("home"));
 
     // Training manuell eintragen (Datum = aktuell gewählter Tag, sonst heute)
     $("#cal-add").addEventListener("click", () => {
