@@ -93,6 +93,42 @@ h1, h2, h3 {
 
 .view.active { display: block; }
 
+/* ── Workout: Vollbild-Wisch-Layout ──
+   Eigene Höhen-Geometrie statt Dokumentfluss: Kopf + Punkte bleiben oben,
+   darunter scrollt der horizontale Snap-Deck. */
+.view-workout { padding: 0; height: 100vh; height: 100dvh; max-width: 600px; margin: 0 auto; }
+.view-workout.active { display: flex; flex-direction: column; }
+.view-workout .wk-head { padding: calc(env(safe-area-inset-top, 0px) + 14px) 18px 8px; margin: 0; flex: 0 0 auto; }
+
+/* Fortschrittspunkte */
+.wk-dots { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; align-items: center;
+  padding: 4px 18px 12px; flex: 0 0 auto; }
+.wk-dot { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--surface-2);
+  border: 1px solid var(--line); padding: 0; transition: background .2s, transform .2s, width .2s;
+  -webkit-tap-highlight-color: transparent; }
+.wk-dot.done { background: var(--accent-line); }
+.wk-dot.active { background: var(--accent); border-color: var(--accent); width: 20px; border-radius: 4px; }
+
+/* Snap-Deck + Screens */
+.wk-deck { flex: 1 1 auto; min-height: 0; display: flex; overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; }
+.wk-deck::-webkit-scrollbar { display: none; }
+/* Wrapper der Übungs-Screens löst sich auf → Karten werden direkte Deck-Items. */
+.exercise-list { display: contents; }
+.deck-screen { flex: 0 0 100%; width: 100%; scroll-snap-align: start; scroll-snap-stop: always;
+  overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  padding: 4px 18px calc(env(safe-area-inset-bottom, 0px) + 28px); }
+.final-screen { display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+.final-screen .add-ex-btn, .final-screen .finish-btn { margin: 0; max-width: 520px; width: 100%; align-self: center; }
+/* Warm-up-Screen: Inhalt zentriert, Breite gedeckelt wie die Übungs-Screens. */
+.warmup-screen { padding-top: 8px; }
+.warmup-screen .warmup-banner, .warmup-screen .wk-flags { max-width: 520px; margin-left: auto; margin-right: auto; }
+.warmup-screen .wk-flags { margin-top: 14px; }
+/* Impro-Auswahl-Screen: Wähl-Karte mittig statt randlos. */
+.ex-card.impro-slot { justify-content: center; }
+.ex-card.impro-slot .impro-choose { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -195,12 +231,7 @@ h1, h2, h3 {
 .wk-title { flex: 1; min-width: 0; }
 .wk-title h2 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wk-sub { margin: 2px 0 0; font-size: 12.5px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wk-ring { width: 48px; height: 48px; flex: 0 0 auto; border-radius: 50%;
-  background: conic-gradient(var(--accent) calc(var(--p) * 1%), var(--surface-2) 0); display: grid; place-items: center; }
-.wk-ring span { width: 38px; height: 38px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -0.02em; }
-.wk-ring span i { color: var(--muted); font-style: normal; font-weight: 500; font-size: 9.5px; }
-.wk-tonnage { margin: -6px 0 14px; text-align: right; font-size: 12px; font-weight: 600; color: var(--accent);
+.wk-tonnage { margin: 0; flex: 0 0 auto; text-align: right; font-size: 12px; font-weight: 600; color: var(--accent);
   font-variant-numeric: tabular-nums; min-height: 15px; }
 
 /* ── Warm-up-Chip ── */
@@ -247,21 +278,22 @@ h1, h2, h3 {
 .cardio-input input { width: 100%; min-width: 0; border: none; background: none; outline: none; color: var(--text); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cardio-input i { font-style: normal; font-size: 11px; font-weight: 600; color: var(--muted); flex: 0 0 auto; }
 
-/* ── Übungs-Karte (Atelier) ── */
-.exercise-list { display: flex; flex-direction: column; gap: 11px; }
-.ex-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; scroll-margin-top: 12px; }
-.ex-card.open { border-color: var(--accent-line); }
+/* ── Übungs-Screen (Vollbild) ──
+   .exercise-list ist display:contents (oben) → .ex-card sind direkte
+   Deck-Items und füllen je einen Screen. Inhalt oben, scrollt bei Überlauf. */
+.ex-card { display: flex; flex-direction: column; gap: 14px; max-width: 520px; margin: 0 auto; padding-top: 8px; }
 .ex-head { display: flex; align-items: center; gap: 13px; width: 100%; text-align: left; }
-.ex-figure { width: 54px; height: 54px; flex: 0 0 auto; border-radius: 14px; background: var(--bg); padding: 5px; overflow: hidden; }
+.ex-figure { width: 64px; height: 64px; flex: 0 0 auto; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); padding: 7px; overflow: hidden; }
 .ex-figure svg { width: 100%; height: 100%; display: block; }
 .ex-meta { flex: 1; min-width: 0; }
-.ex-meta h3 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
-.ex-meta p { margin: 3px 0 0; font-size: 12px; color: var(--dim); }
-.ex-pos { font-size: 12px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
-.ex-chev { color: var(--muted); flex: 0 0 auto; display: grid; place-items: center; transition: transform .2s ease; }
-.ex-card.open .ex-chev { transform: rotate(180deg); }
-.ex-body { display: none; margin-top: 14px; }
-.ex-card.open .ex-body { display: block; }
+.ex-meta h3 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+.ex-meta p { margin: 3px 0 0; font-size: 12.5px; color: var(--dim); }
+/* Dezenter „alle Sätze erledigt"-Hinweis (kein Auto-Weiterspringen). */
+.ex-done-badge { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; align-self: flex-start;
+  font-size: 11.5px; font-weight: 600; color: var(--accent); background: var(--accent-soft);
+  border-radius: 999px; padding: 5px 10px; }
+.ex-done-badge svg { width: 14px; height: 14px; }
+.ex-body { display: block; }
 
 /* Overload-Hinweis */
 .oh-hint { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--dim);
@@ -329,10 +361,13 @@ h1, h2, h3 {
 
 /* Übung tauschen / heute auslassen — eine Aktions-Zeile */
 .ex-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.ex-swap, .ex-skip { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px;
-  background: transparent; border: 1px solid var(--line); border-radius: var(--r-xs); color: var(--dim); font: inherit; font-size: 13px; transition: color .15s, border-color .15s; }
-.ex-swap:active, .ex-skip:active { color: var(--accent); border-color: var(--accent-line); }
-.ex-swap svg, .ex-skip svg { flex: 0 0 auto; }
+/* Einziger, dezenter Aktions-Button pro Übung: „Weniger Energie". Toggelt den
+   Session-Marker; aktiver Zustand (.on) gibt sich die Akzentfarbe. */
+.ex-energy { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px;
+  background: transparent; border: 1px solid var(--line); border-radius: var(--r-xs); color: var(--dim); font: inherit; font-size: 13px; transition: color .15s, border-color .15s, background .15s; }
+.ex-energy:active { color: var(--accent); border-color: var(--accent-line); }
+.ex-energy.on { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft, rgba(216,157,142,.12)); }
+.ex-energy svg { flex: 0 0 auto; }
 
 /* Dritter Zustand: übersprungen — neutral, gedämpft, gestrichelt (klar als
    eigener Zustand erkennbar, nicht wie „nicht geschafft"). */

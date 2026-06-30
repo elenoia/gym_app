@@ -48,7 +48,7 @@ const PLAN = {
     impro: true,
     sets: 3, repsLow: 10, repsHigh: 12, rest: 90,
     regions: [
-      { key: "beine_po",  label: "Beine & Po", muscles: ["Quadrizeps", "Gesäß", "Hamstrings", "Hüfte"] },
+      { key: "beine_po",  label: "Beine & Po", muscles: ["Quadrizeps", "Gesäß", "Hamstrings", "Hüfte", "Adduktoren"] },
       { key: "brust",     label: "Brust",      muscles: ["Brust"] },
       { key: "ruecken",   label: "Rücken",     muscles: ["Latissimus", "Oberer Rücken", "Unterer Rücken", "Rhomboiden"] },
       { key: "schultern", label: "Schultern",  muscles: ["Schultern", "Hintere Schulter", "Trapez"] },

@@ -716,6 +716,41 @@ const EXERCISES = {
     </svg>`
   },
 
+  // ───── Adduktoren-Maschine ─────
+  adduktoren: {
+    name: "Adduktoren-Maschine",
+    target: "Adduktoren (Innenschenkel)",
+    notes: "Polster an der Innenseite der Oberschenkel. Beine kontrolliert zusammenführen, kurz halten, langsam öffnen lassen — kein Schwung. Knieschonend.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Seat -->
+        <rect x="40" y="60" width="20" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
+        <!-- Backrest -->
+        <line x1="50" y1="30" x2="50" y2="62" stroke="#3A3A5C" stroke-width="6"/>
+        <!-- Head -->
+        <circle cx="50" cy="28" r="5" fill="#D89D8E"/>
+        <!-- Torso -->
+        <line x1="50" y1="33" x2="50" y2="62" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Hip joint -->
+        <circle cx="50" cy="62" r="2" fill="#F2E9E4"/>
+        <!-- Left leg: starts spread, squeezes inward to center (adduction), pad on inner thigh -->
+        <g>
+          <animateTransform attributeName="transform" type="rotate"
+            values="-24 50 62;0 50 62;-24 50 62" dur="2.4s" repeatCount="indefinite"/>
+          <line x1="50" y1="62" x2="40" y2="90" stroke="#F2E9E4" stroke-width="2.5"/>
+          <rect x="44" y="74" width="6" height="12" rx="1.5" fill="#D89D8E"/>
+        </g>
+        <!-- Right leg: mirror -->
+        <g>
+          <animateTransform attributeName="transform" type="rotate"
+            values="24 50 62;0 50 62;24 50 62" dur="2.4s" repeatCount="indefinite"/>
+          <line x1="50" y1="62" x2="60" y2="90" stroke="#F2E9E4" stroke-width="2.5"/>
+          <rect x="50" y="74" width="6" height="12" rx="1.5" fill="#D89D8E"/>
+        </g>
+      </g>
+    </svg>`
+  },
+
   // ───── Brustpresse (Maschine) ─────
   brustpresse: {
     name: "Brustpresse (Maschine)",
@@ -1141,6 +1176,8 @@ const EXERCISES = {
  *   muscles      – Hauptmuskelgruppe(n), für Filter/Anzeige.
  *   alternatives – IDs gleichwertiger Übungen (gleiche Muskelgruppe, anderes Gerät),
  *                  die beim Training schnell getauscht werden können.
+ *   kneeFriendly – true bei knieschonenden Übungen (z. B. Adduktoren-Maschine).
+ *                  Rein informativ → Tag „Knieschonend" in der Detail-Ansicht.
  *   startWeight  – optionales Startgewicht (kg) für die allererste Einheit. Greift
  *                  nur, solange es noch keinen gespeicherten Gewichtsverlauf gibt
  *                  (buildWorkoutExercise in app.js). Fehlt das Feld → Feld bleibt leer.
@@ -1178,7 +1215,10 @@ const EXERCISE_META = {
   liegestuetze:     { equipment: "Körpergewicht", unilateral: false, muscles: ["Brust", "Schultern", "Trizeps", "Core"], alternatives: ["bankdruecken", "butterfly"] },
   latzug_eng:       { equipment: "Kabel",         unilateral: false, muscles: ["Latissimus", "Bizeps"],          alternatives: ["latzug_breit", "bizeps_curls", "langhantelrudern_untergriff"] },
   rudern_maschine:  { equipment: "Maschine",      unilateral: false, muscles: ["Oberer Rücken", "Latissimus"],   alternatives: ["kabelrudern", "latzug_breit"] },
-  abduktoren:       { equipment: "Maschine",      unilateral: false, muscles: ["Gesäß", "Hüfte"],               alternatives: ["hip_thrust"] },
+  abduktoren:       { equipment: "Maschine",      unilateral: false, muscles: ["Gesäß", "Hüfte"],               alternatives: ["hip_thrust", "adduktoren"] },
+  // Innenschenkel-Pendant zur Abduktoren-Maschine. Bilateral, knieschonend.
+  // Nicht fest im Plan — über Hinzufügen/Tauschen/Impro (Region „Beine & Po") wählbar.
+  adduktoren:       { equipment: "Maschine",      unilateral: false, muscles: ["Adduktoren"],                   alternatives: ["abduktoren", "beinpresse"], kneeFriendly: true },
   brustpresse:      { equipment: "Maschine",      unilateral: false, muscles: ["Brust"],                         alternatives: ["vertikale_chestpress", "butterfly", "bankdruecken"] },
   schulterpresse:   { equipment: "Maschine",      unilateral: false, muscles: ["Schultern"],                     alternatives: ["schulterdruecken", "ohp_langhantel"] },
   reverse_fly:      { equipment: "Maschine",      unilateral: false, muscles: ["Hintere Schulter", "Trapez"],   alternatives: ["face_pulls", "rear_delt_pull"] },
@@ -1206,6 +1246,9 @@ Object.entries(EXERCISES).forEach(([id, ex]) => {
   ex.unilateral   = meta.unilateral   ?? false;
   ex.muscles      = meta.muscles      ?? [];
   ex.alternatives = meta.alternatives ?? [];
+  // Knieschonend-Flag (z. B. Adduktoren-/Abduktoren-Maschine): rein informativ,
+  // wird als Tag in der Detail-Ansicht angezeigt. Default: nicht markiert.
+  ex.kneeFriendly = meta.kneeFriendly ?? false;
   // Optionales Startgewicht (kg); null = keins → Eingabefeld bleibt leer.
   ex.startWeight  = meta.startWeight  ?? null;
   // Mess-Modus: "weight" (Standard) oder "duration" (Haltedauer in Sekunden).

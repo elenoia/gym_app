@@ -106,6 +106,8 @@
     info:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.8" r="0.4" fill="currentColor"/></svg>`,
     play:  `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg>`,
     undo:  `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>`,
+    // Batterie-Glyph für „Weniger Energie" (leerer Ladestand).
+    energy: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="2.5"/><line x1="21" y1="10" x2="21" y2="14"/><line x1="5.5" y1="12" x2="8.5" y2="12"/></svg>`,
   };
 
   // Mascot fürs Plan-Badge — nach Reihenfolge A/B/C/D, danach zyklisch.
@@ -494,6 +496,7 @@
 
     saveActiveSession(); // überschreibt evtl. alte aktive Session → neue Einheit startet leer
     renderWorkout();
+    const deck = $("#workout-deck"); if (deck) deck.scrollLeft = 0; // beim Warm-up starten
     showView("workout");
   }
 
@@ -864,14 +867,15 @@
     renderWarmup();
     renderFlags();
 
-    const total = state.workout.exercises.length;
     const list = $("#exercise-list");
     list.innerHTML = "";
     state.workout.exercises.forEach((ex, exIdx) => {
       // Impro: leerer Region-Slot → Auswahl-Karte statt Übungskarte.
       if (ex.placeholder) {
         const slotCard = document.createElement("div");
-        slotCard.className = "ex-card impro-slot";
+        slotCard.className = "ex-card impro-slot deck-screen";
+        slotCard.dataset.label = ex.region || "Übung wählen";
+        slotCard.dataset.done = "false";
         slotCard.innerHTML = `
           <button class="impro-choose" data-slot="${exIdx}" aria-label="${escapeHtml(ex.region)}: Übung wählen">
             <span class="impro-slot-region">${escapeHtml(ex.region)}</span>
@@ -885,15 +889,19 @@
       const meta = EXERCISES[ex.id];
       const activeIdx = ex.sets.findIndex(s => !s.done);
       const ob = lastBest(ex);
+      const allDone = ex.sets.length > 0 && ex.sets.every(s => s.done);
       const card = document.createElement("div");
-      card.className = "ex-card" + (ex.expanded ? " open" : "");
+      card.className = "ex-card deck-screen";
       card.dataset.exId = ex.id;
+      card.dataset.label = meta.name;
+      card.dataset.done = allDone ? "true" : "false";
 
       // Dritter Zustand „übersprungen": eigener, neutraler Look (nicht rot,
       // nicht ausgeblendet, nicht wie „nicht geschafft"). Reversibel über
       // „Aufnehmen". Zählt nicht in den Fortschritt (siehe updateProgress).
       if (ex.skipped) {
-        card.className = "ex-card skipped";
+        card.className = "ex-card skipped deck-screen";
+        card.dataset.done = "false";
         card.innerHTML = `
           <div class="ex-head">
             <span class="ex-figure" aria-hidden="true">${meta.svg}</span>
@@ -915,17 +923,14 @@
       }
 
       card.innerHTML = `
-        <div class="ex-head">
-          <button class="ex-figure" data-detail="${exIdx}" aria-label="Übungsdetail">${meta.svg}</button>
-          <button class="ex-toggle" data-action="toggle">
-            <span class="ex-meta">
-              <h3>${escapeHtml(meta.name)}${ex.addedInSession ? `<span class="ex-added">Zusatz heute</span>` : ""}</h3>
-              <p>${escapeHtml(meta.target)} · ${ex.metric === "duration" ? `${ex.sets.length} × Halten` : `${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}`}</p>
-            </span>
-            <span class="ex-pos">${exIdx + 1}/${total}</span>
-            <span class="ex-chev">${ICONS.chevD}</span>
-          </button>
-        </div>
+        <button class="ex-head" data-detail="${exIdx}" aria-label="${escapeHtml(meta.name)} – Details">
+          <span class="ex-figure">${meta.svg}</span>
+          <span class="ex-meta">
+            <h3>${escapeHtml(meta.name)}${ex.addedInSession ? `<span class="ex-added">Zusatz heute</span>` : ""}</h3>
+            <p>${escapeHtml(meta.target)} · ${ex.metric === "duration" ? `${ex.sets.length} × Halten` : `${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}`}</p>
+          </span>
+          ${allDone ? `<span class="ex-done-badge">${ICONS.check} fertig</span>` : ""}
+        </button>
         <div class="ex-body">
           ${ex.unilateral ? segHTML(ex, exIdx) : ""}
           ${ob ? `<div class="oh-hint">${ICONS.trend} Letztes Mal <b>${escapeHtml(formatLastBest(ex, ob))}</b></div>` : ""}
@@ -934,25 +939,13 @@
           </div>
           ${noteHTML(ex)}
           <div class="ex-actions">
-            ${ex.slotKey
-              ? `<button class="ex-swap" data-impro-swap="${exIdx}">${ICONS.swap} Wechseln</button>`
-              : ((meta.alternatives && meta.alternatives.length) ? `<button class="ex-swap" data-swap-ex="${exIdx}">${ICONS.swap} Tauschen</button>` : "")}
-            <button class="ex-skip" data-skip-ex="${exIdx}">${ICONS.skip} Heute auslassen</button>
+            <button class="ex-energy${anyFlag(state.workout.flags) ? " on" : ""}" data-energy="${exIdx}" aria-pressed="${state.workout.flags && state.workout.flags.wenigEnergie ? "true" : "false"}">${ICONS.energy} Weniger Energie</button>
           </div>
         </div>`;
 
-      // Auf-/Zuklappen
-      card.querySelector('[data-action="toggle"]').addEventListener("click", () => {
-        ex.expanded = !ex.expanded;
-        card.classList.toggle("open");
-        if (card.classList.contains("open")) {
-          requestAnimationFrame(() => card.scrollIntoView({ behavior: "smooth", block: "start" }));
-        }
-      });
-
-      // Figur antippen → Übungsdetail
-      const figBtn = card.querySelector(".ex-figure[data-detail]");
-      if (figBtn) figBtn.addEventListener("click", () => openExerciseDetail(+figBtn.dataset.detail));
+      // Kopf antippen → Übungsdetail (Animation, Tags, Tauschen)
+      const headBtn = card.querySelector(".ex-head[data-detail]");
+      if (headBtn) headBtn.addEventListener("click", () => openExerciseDetail(+headBtn.dataset.detail));
 
       // Stepper ± — verstellt den Wert des aktiven Satzes
       card.querySelectorAll(".step").forEach(btn => {
@@ -1010,21 +1003,17 @@
         });
       });
 
-      // Übung gegen Alternative tauschen (bzw. bei Impro: Region neu wählen)
-      const swapBtn = card.querySelector(".ex-swap");
-      if (swapBtn) swapBtn.addEventListener("click", () => {
-        if (swapBtn.dataset.improSwap != null) chooseImproExercise(+swapBtn.dataset.improSwap);
-        else openSwap(+swapBtn.dataset.swapEx);
-      });
-
-      // Übung heute auslassen (session-only, reversibel) → Karte zuklappen und
-      // in den „übersprungen"-Zustand schalten.
-      const skipBtn = card.querySelector(".ex-skip");
-      if (skipBtn) skipBtn.addEventListener("click", () => {
-        const i = +skipBtn.dataset.skipEx;
-        state.workout.exercises[i].skipped = true;
-        state.workout.exercises[i].expanded = false;
-        haptic(15);
+      // „Weniger Energie": einziger Aktions-Button pro Übung. Wiederverwendung
+      // der bestehenden Gewicht-reduzieren-Logik — toggelt den Session-Marker
+      // `wenigEnergie` und lässt applyEnergyAdjustment() die offenen Sätze
+      // anpassen (session-weit, wie der Flag-Button). Keine neue Logik.
+      const energyBtn = card.querySelector(".ex-energy");
+      if (energyBtn) energyBtn.addEventListener("click", () => {
+        const f = state.workout.flags || (state.workout.flags = defaultFlags());
+        f.wenigEnergie = !f.wenigEnergie;
+        applyEnergyAdjustment();
+        haptic(12);
+        saveActiveSession();
         renderWorkout();
       });
 
@@ -1064,10 +1053,11 @@
       list.appendChild(card);
     });
 
-    // Default am Sessionstart: Warm-up im Fokus, keine Übung automatisch offen.
-    if (!state.workout.exercises.some(e => e.expanded)) {
-      $("#warmup-banner").classList.add("open");
-    }
+    // Warm-up-Checkliste bleibt im Vollbild-Screen aufgeklappt sichtbar.
+    $("#warmup-banner").classList.add("open");
+
+    // Fortschrittspunkte neu aufbauen, nachdem alle Screens im DOM sind.
+    renderDots();
 
     // Jede Render-auslösende Mutation (abhaken, undo, split, tauschen …) hier
     // mitsichern. Handler ohne Re-Render (Stepper ±, Eingabe, Warm-up) speichern
@@ -1076,19 +1066,37 @@
   }
 
   function updateProgress() {
-    let done = 0, total = 0;
-    // Übersprungene Übungen zählen NICHT in den Nenner — eine ausgelassene
-    // Übung darf die Einheit nicht wie unvollständig/verfehlt aussehen lassen.
-    state.workout.exercises.forEach(ex => {
-      if (ex.skipped) return;
-      ex.sets.forEach(s => { total++; if (s.done) done++; });
-    });
-    const pct = total ? Math.round((done / total) * 100) : 0;
-    const ring = $("#workout-ring");
-    if (ring) ring.style.setProperty("--p", pct);
-    const label = $("#workout-ring-label");
-    if (label) label.innerHTML = `${done}<i>/${total}</i>`;
     updateLiveTonnage();
+  }
+
+  // Fortschrittspunkte: ein Punkt pro Deck-Screen (Warm-up, jede Übung,
+  // Abschluss) in Dokumentreihenfolge. Antippen springt direkt hin.
+  // Erledigte Übungen (alle Sätze done) bekommen einen gefüllten Punkt.
+  function renderDots() {
+    const dotsHost = $("#workout-dots");
+    const deck = $("#workout-deck");
+    if (!dotsHost || !deck) return;
+    const screens = [...deck.querySelectorAll(".deck-screen")];
+    dotsHost.innerHTML = screens.map((scr, i) =>
+      `<button class="wk-dot${scr.dataset.done === "true" ? " done" : ""}" data-dot="${i}" role="tab" aria-label="${escapeHtml(scr.dataset.label || "Screen " + (i + 1))}"></button>`
+    ).join("");
+    dotsHost.querySelectorAll(".wk-dot").forEach((d, i) => {
+      d.addEventListener("click", () => {
+        screens[i].scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+      });
+    });
+    updateActiveDot();
+  }
+
+  // Aktiven Punkt aus der horizontalen Scroll-Position ableiten (jeder Screen
+  // ist 100 % breit). Funktioniert für Touch-Momentum wie für Maus/Trackpad.
+  function updateActiveDot() {
+    const deck = $("#workout-deck");
+    const dotsHost = $("#workout-dots");
+    if (!deck || !dotsHost) return;
+    const w = deck.clientWidth || 1;
+    const idx = Math.round(deck.scrollLeft / w);
+    dotsHost.querySelectorAll(".wk-dot").forEach((d, i) => d.classList.toggle("active", i === idx));
   }
 
   // Live mitlaufende Tonnage der laufenden Session (noch nicht gespeicherter State).
@@ -1569,7 +1577,7 @@
     $("#detail-sub").textContent = meta.target;
     $("#detail-figure").innerHTML = meta.svg;
 
-    const tags = [meta.equipment, ...(meta.muscles || [])].filter(Boolean);
+    const tags = [meta.equipment, ...(meta.muscles || []), meta.kneeFriendly ? "Knieschonend" : null].filter(Boolean);
     $("#detail-tags").innerHTML = tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
 
     const ob = lastBest(ex);
@@ -1980,6 +1988,16 @@
     $("#warmup-toggle").addEventListener("click", () => {
       $("#warmup-banner").classList.toggle("open");
     });
+
+    // Aktiven Fortschrittspunkt beim Wischen/Scrollen nachführen (rAF-gedrosselt).
+    const deck = $("#workout-deck");
+    if (deck) {
+      let raf = null;
+      deck.addEventListener("scroll", () => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = null; updateActiveDot(); });
+      }, { passive: true });
+    }
 
     $("#timer-skip").addEventListener("click", stopTimer);
     $("#timer-plus").addEventListener("click", () => {

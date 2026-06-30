@@ -65,8 +65,8 @@
       <div class="calendar-detail" id="cal-detail"></div>
     </section>
 
-    <!-- Workout -->
-    <section id="view-workout" class="view">
+    <!-- Workout (Vollbild-Wisch-Layout: je ein Screen pro Übung) -->
+    <section id="view-workout" class="view view-workout">
       <header class="wk-head">
         <button class="iconbtn ghost back-btn" id="back-home" aria-label="Zurück">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -75,33 +75,42 @@
           <h2 id="workout-title">Aufbau</h2>
           <p class="wk-sub" id="workout-sub"></p>
         </div>
-        <div class="wk-ring" id="workout-ring" style="--p:0">
-          <span id="workout-ring-label">0<i>/0</i></span>
-        </div>
+        <p class="wk-tonnage" id="workout-tonnage" aria-live="polite"></p>
       </header>
-      <p class="wk-tonnage" id="workout-tonnage" aria-live="polite"></p>
 
-      <div class="wk-flags" id="workout-flags"></div>
+      <!-- Fortschrittspunkte (ersetzt den 2/7-Zähler): aktueller Index +
+           antippbar zum Springen. Wird von renderDots() befüllt. -->
+      <div class="wk-dots" id="workout-dots" role="tablist" aria-label="Übungen"></div>
 
-      <div class="warmup-banner" id="warmup-banner">
-        <button class="warmup-chip" id="warmup-toggle">
-          <span class="wu-left">
-            <i class="wu-check" id="warmup-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></i>
-            <span id="warmup-label">Warm-up</span>
-          </span>
-          <span class="wu-meta" id="warmup-meta">0/0</span>
-        </button>
-        <div class="warmup-content" id="warmup-content"></div>
+      <!-- Horizontaler Snap-Container: jede .deck-screen füllt den Screen. -->
+      <div class="wk-deck" id="workout-deck">
+        <!-- Screen 1: Warm-up -->
+        <section class="deck-screen warmup-screen" data-label="Warm-up">
+          <div class="warmup-banner open" id="warmup-banner">
+            <button class="warmup-chip" id="warmup-toggle">
+              <span class="wu-left">
+                <i class="wu-check" id="warmup-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></i>
+                <span id="warmup-label">Warm-up</span>
+              </span>
+              <span class="wu-meta" id="warmup-meta">0/0</span>
+            </button>
+            <div class="warmup-content" id="warmup-content"></div>
+          </div>
+          <div class="wk-flags" id="workout-flags"></div>
+        </section>
+
+        <!-- Screens pro Übung (von renderWorkout befüllt; display:contents) -->
+        <div class="exercise-list" id="exercise-list"></div>
+
+        <!-- Letzter Screen: Übung ergänzen / Training beenden -->
+        <section class="deck-screen final-screen" data-label="Abschluss">
+          <button class="add-ex-btn" id="add-exercise">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Übung hinzufügen
+          </button>
+          <button class="finish-btn" id="finish-workout">Training beenden</button>
+        </section>
       </div>
-
-      <div class="exercise-list" id="exercise-list"></div>
-
-      <button class="add-ex-btn" id="add-exercise">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Übung hinzufügen
-      </button>
-
-      <button class="finish-btn" id="finish-workout">Training beenden</button>
     </section>
 
     <!-- Übungsdetail -->
