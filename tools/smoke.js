@@ -40,11 +40,10 @@ const waitVisible = (page, selector) =>
   // Tag A
   await page.click('[data-day="A"]');
   await page.waitForSelector("#view-workout.active");
-  await page.waitForSelector(".ex-card"); // exercise list rendered
-  // Workouts starten mit aufgeklapptem Warmup, alle Übungen zu — selbst öffnen
+  await page.waitForSelector(".ex-card"); // Übungs-Screens gerendert
+  // Wisch-Layout: jede Übung füllt einen Screen, Steuerung immer sichtbar
+  // (kein Auf-/Zuklappen). Kopf antippen öffnet das Detail — hier nicht nötig.
   const firstEx = page.locator(".ex-card").first();
-  await firstEx.locator(".ex-head").click();
-  await page.waitForSelector(".ex-card.open");
   await shot(page, "03-workout-initial");
 
   // Set 1 — Stepper-Wert tippen + bestätigen

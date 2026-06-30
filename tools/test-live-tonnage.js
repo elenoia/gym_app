@@ -18,8 +18,7 @@ const liveText = (page) => page.locator("#workout-tonnage").textContent();
   await page.click('[data-day="A"]');
   await page.waitForSelector(".ex-card");
   const ex = page.locator('.ex-card[data-ex-id="beinpresse"]');
-  await ex.locator(".ex-head").click();
-  await page.waitForTimeout(150);
+  // Wisch-Layout: Karte ist immer offen, kein Aufklappen nötig.
 
   const before = (await liveText(page)).trim();
   console.log("live before:", JSON.stringify(before), "(want empty)");

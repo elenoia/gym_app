@@ -23,8 +23,7 @@ async function openFirst(page) {
   await page.click('[data-day="A"]');
   await page.waitForSelector(".ex-card");
   const ex = page.locator(".ex-card").first();
-  await ex.locator(".ex-head").click();
-  await page.waitForTimeout(150);
+  // Wisch-Layout: Karte ist immer offen, kein Aufklappen nötig.
   return ex;
 }
 

@@ -847,15 +847,12 @@
   // Notiz im Training — eingeklappt (Vorschau) oder ausgeklappt (Textarea).
   function noteHTML(ex) {
     const note = getUserNote(ex.id);
-    if (ex.noteOpen) {
-      return `<div class="note-edit">
-        <span class="ovl note-ovl">${ICONS.info} Deine Notiz</span>
-        <textarea class="note-input" rows="3" data-note-ex="${ex.id}" placeholder="Griff, Sitzposition, Gefühl …">${escapeHtml(note)}</textarea>
-      </div>`;
-    }
-    return `<button class="note-toggle" data-note-open="${ex.id}">
-      ${ICONS.info} ${note ? `<span class="note-peek">${escapeHtml(note)}</span>` : `<span>Notiz hinzufügen</span>`}
-    </button>`;
+    // Vollbild-Layout: genug Platz → Notiz ist immer direkt editierbar
+    // ausgeklappt (kein Peek/Toggle mehr).
+    return `<div class="note-edit">
+      <span class="ovl note-ovl">${ICONS.info} Deine Notiz</span>
+      <textarea class="note-input" rows="3" data-note-ex="${ex.id}" placeholder="Griff, Sitzposition, Gefühl …">${escapeHtml(note)}</textarea>
+    </div>`;
   }
 
   // ─── Workout-Ansicht rendern ─────────────────────────
@@ -890,6 +887,12 @@
       const activeIdx = ex.sets.findIndex(s => !s.done);
       const ob = lastBest(ex);
       const allDone = ex.sets.length > 0 && ex.sets.every(s => s.done);
+      // Dezente Vorschau: was kommt nach dieser Übung? Nächste Übung (bzw.
+      // Region bei leerem Impro-Slot) oder der Abschluss-Screen.
+      const nextEx = state.workout.exercises[exIdx + 1];
+      const nextLabel = nextEx
+        ? (nextEx.placeholder ? nextEx.region : (EXERCISES[nextEx.id]?.name || nextEx.region || "Nächste Übung"))
+        : "Training beenden";
       const card = document.createElement("div");
       card.className = "ex-card deck-screen";
       card.dataset.exId = ex.id;
@@ -941,6 +944,11 @@
           <div class="ex-actions">
             <button class="ex-energy${anyFlag(state.workout.flags) ? " on" : ""}" data-energy="${exIdx}" aria-pressed="${state.workout.flags && state.workout.flags.wenigEnergie ? "true" : "false"}">${ICONS.energy} Weniger Energie</button>
           </div>
+          <button class="ex-next" data-next-from="${exIdx}">
+            <span class="ex-next-ovl">Als Nächstes</span>
+            <span class="ex-next-name">${escapeHtml(nextLabel)}</span>
+            ${ICONS.chevR}
+          </button>
         </div>`;
 
       // Kopf antippen → Übungsdetail (Animation, Tags, Tauschen)
@@ -978,16 +986,7 @@
         input.addEventListener("change", persist);
       });
 
-      // Notiz öffnen / bearbeiten
-      const noteToggle = card.querySelector(".note-toggle");
-      if (noteToggle) {
-        noteToggle.addEventListener("click", () => {
-          ex.noteOpen = true;
-          renderWorkout();
-          const ta = $(`.note-input[data-note-ex="${ex.id}"]`);
-          if (ta) ta.focus();
-        });
-      }
+      // Notiz bearbeiten (immer ausgeklappt → kein Toggle mehr)
       const noteInput = card.querySelector(".note-input");
       if (noteInput) {
         const persistNote = (e) => setUserNote(e.target.dataset.noteEx, e.target.value);
@@ -1015,6 +1014,18 @@
         haptic(12);
         saveActiveSession();
         renderWorkout();
+      });
+
+      // „Als Nächstes"-Vorschau antippen → zum nächsten Deck-Screen wischen.
+      const nextBtn = card.querySelector(".ex-next");
+      if (nextBtn) nextBtn.addEventListener("click", () => {
+        const deck = $("#workout-deck");
+        if (!deck) return;
+        const screens = [...deck.querySelectorAll(".deck-screen")];
+        const idx = screens.indexOf(card);
+        if (idx >= 0 && screens[idx + 1]) {
+          screens[idx + 1].scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+        }
       });
 
       // Satz bestätigen → done, Pause starten
@@ -1085,6 +1096,17 @@
         screens[i].scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
       });
     });
+
+    // Zähler „X von Y Übungen": nur echte Übungs-Screens (ohne Warm-up/Abschluss),
+    // erledigt = alle Sätze abgehakt (data-done).
+    const countEl = $("#workout-count");
+    if (countEl) {
+      const exScreens = screens.filter(s => s.classList.contains("ex-card"));
+      const doneEx = exScreens.filter(s => s.dataset.done === "true").length;
+      countEl.innerHTML = exScreens.length
+        ? `<b>${doneEx}</b> von ${exScreens.length} Übungen`
+        : "";
+    }
     updateActiveDot();
   }
 

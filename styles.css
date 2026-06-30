@@ -100,6 +100,11 @@ h1, h2, h3 {
 .view-workout.active { display: flex; flex-direction: column; }
 .view-workout .wk-head { padding: calc(env(safe-area-inset-top, 0px) + 14px) 18px 8px; margin: 0; flex: 0 0 auto; }
 
+/* Übungs-Zähler „X von Y Übungen" — erledigt = alle Sätze abgehakt. */
+.wk-count { margin: 0; padding: 0 18px 6px; text-align: center; flex: 0 0 auto;
+  font-size: 12.5px; font-weight: 600; color: var(--dim); font-variant-numeric: tabular-nums; }
+.wk-count b { color: var(--accent); font-weight: 700; }
+
 /* Fortschrittspunkte */
 .wk-dots { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; align-items: center;
   padding: 4px 18px 12px; flex: 0 0 auto; }
@@ -347,12 +352,7 @@ h1, h2, h3 {
 .seg button { flex: 1; padding: 9px; font-size: 13px; font-weight: 600; color: var(--dim); border-radius: calc(var(--r-sm) - 4px); transition: .15s; }
 .seg button.on { background: var(--accent); color: var(--on-accent); }
 
-/* Notiz im Training */
-.note-toggle { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; margin-top: 14px;
-  padding: 11px 13px; background: var(--bg); border: 1px dashed var(--line); border-radius: var(--r-sm); font-size: 12.5px; color: var(--dim); transition: border-color .15s; }
-.note-toggle:active { border-color: var(--accent-line); }
-.note-toggle > svg { color: var(--accent); flex: 0 0 auto; }
-.note-peek { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Notiz im Training — immer ausgeklappt editierbar */
 .note-edit { margin-top: 14px; padding: 13px; background: var(--bg); border: 1px solid var(--accent-line); border-radius: var(--r-sm); }
 .note-ovl { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
 .note-ovl svg { color: var(--accent); }
@@ -368,6 +368,18 @@ h1, h2, h3 {
 .ex-energy:active { color: var(--accent); border-color: var(--accent-line); }
 .ex-energy.on { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft, rgba(216,157,142,.12)); }
 .ex-energy svg { flex: 0 0 auto; }
+
+/* Dezente „Als Nächstes"-Vorschau am Fuß des Übungs-Screens. Antippbar →
+   wischt zum nächsten Screen. */
+.ex-next { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 18px;
+  padding: 11px 4px 0; border-top: 1px solid var(--line); text-align: left;
+  color: var(--muted); -webkit-tap-highlight-color: transparent; }
+.ex-next-ovl { flex: 0 0 auto; font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted); }
+.ex-next-name { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ex-next svg { flex: 0 0 auto; color: var(--muted); }
+.ex-next:active .ex-next-name { color: var(--accent); }
 
 /* Dritter Zustand: übersprungen — neutral, gedämpft, gestrichelt (klar als
    eigener Zustand erkennbar, nicht wie „nicht geschafft"). */

@@ -16,8 +16,7 @@ const URL = "http://127.0.0.1:8765/index.html";
   await page.click('[data-day="A"]');
   await page.waitForSelector(".ex-card");
   let ex = page.locator('.ex-card[data-ex-id="face_pulls"]');
-  await ex.locator(".ex-head").click();
-  await page.waitForTimeout(150);
+  // Wisch-Layout: Karte ist immer offen, kein Aufklappen nötig.
 
   // Segmented L/R control present on unilateral exercise.
   const hasSeg = await ex.locator('.seg button[data-split="1"]').count();

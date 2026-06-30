@@ -46,16 +46,20 @@ const URL = "http://127.0.0.1:8765/index.html";
 
   await page.click('[data-day="A"]');
   await page.waitForSelector(".ex-card");
+  // Wisch-Layout: Tauschen läuft über den Detail-Screen (Kopf antippen →
+  // Detail → Tauschen-Button), nicht mehr über einen Button in der Karte.
   const ex = page.locator('.ex-card[data-ex-id="bankdruecken"]');
   await ex.locator(".ex-head").click();
-  await page.waitForTimeout(150);
-  await ex.locator(".ex-swap").click();
-  await page.waitForSelector("#picker:not(.hidden)");
+  await page.waitForSelector("#view-exercise.active");
+  await page.click("#detail-swap");
+  await page.waitForSelector("#picker.visible");
   const options = await page.locator(".picker-option-label").allTextContents();
   console.log("swap options:", options);
   // Pick the first option (butterfly).
   await page.locator(".picker-option").first().click();
-  await page.waitForTimeout(250);
+  // openSwap → replaceExercise → zurück in die Workout-Ansicht.
+  await page.waitForSelector("#view-workout.active");
+  await page.waitForTimeout(150);
 
   // The bankdruecken card should be gone, replaced by the chosen alternative.
   const stillBank = await page.locator('.ex-card[data-ex-id="bankdruecken"]').count();

@@ -4,12 +4,15 @@ const URL = "http://127.0.0.1:8765/index.html";
 
 async function openNoteEdit(page) {
   const ex = page.locator('.ex-card[data-ex-id="kabelrudern"]');
-  await ex.locator(".ex-head").click();
-  await page.waitForTimeout(150);
-  // Peek shows the default note; open the editor.
-  await ex.locator(".note-toggle").click();
-  await page.waitForTimeout(150);
-  return page.locator('textarea.note-input[data-note-ex="kabelrudern"]');
+  const ta = page.locator('textarea.note-input[data-note-ex="kabelrudern"]');
+  // Wisch-Layout: Karte ist immer offen (Kopf-Tap öffnet das Detail, nicht
+  // mehr ein Aufklappen). Editor evtl. schon offen (Zustand übersteht Reload) —
+  // dann direkt nutzen, sonst über den Peek-Toggle öffnen.
+  if (await ta.count() === 0) {
+    await ex.locator(".note-toggle").click();
+    await page.waitForTimeout(150);
+  }
+  return ta;
 }
 
 (async () => {
@@ -33,7 +36,9 @@ async function openNoteEdit(page) {
   await page.waitForTimeout(100);
 
   await page.reload({ waitUntil: "networkidle" });
-  await page.click('[data-day="A"]');
+  // Session-Persistenz: die laufende Einheit wird nach dem Reload automatisch
+  // wiederhergestellt (Workout-Ansicht statt Home) — kein erneuter Tag-Start.
+  await page.waitForSelector("#view-workout.active");
   await page.waitForSelector(".ex-card");
   ta = await openNoteEdit(page);
   const saved = await ta.inputValue();

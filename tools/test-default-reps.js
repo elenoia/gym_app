@@ -17,8 +17,7 @@ const URL = "http://127.0.0.1:8765/index.html";
   await page.click('[data-day="A"]');
   await page.waitForSelector(".ex-card");
   const ex = page.locator('.ex-card[data-ex-id="beinpresse"]');
-  await ex.locator(".ex-head").click();
-  await page.waitForTimeout(150);
+  // Wisch-Layout: Karte ist immer offen, kein Aufklappen nötig.
 
   const repsPrefill = await ex.locator('.set.active .val-input[data-field="reps"]').inputValue();
   console.log("reps prefill (active set):", JSON.stringify(repsPrefill), "(want \"10\")");

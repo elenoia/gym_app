@@ -49,7 +49,8 @@ const assert = (cond, msg) => { if (!cond) throw new Error("FAIL: " + msg); cons
     // Training starten (Schnellstart-Karte) und ersten Satz abhaken.
     await page.click(".today-card");
     await page.waitForSelector("#view-workout.active");
-    await page.click('.ex-card .ex-toggle');          // erste Karte aufklappen
+    // Wisch-Layout: Karten sind immer offen (kein Aufklappen). Playwright
+    // scrollt den aktiven Satz beim Klick automatisch in den Viewport.
     await page.waitForSelector('.set.active .set-go');
     await page.click('.set.active .set-go');           // Satz 1 fertig
     await page.waitForFunction(() => document.querySelectorAll('.set.done').length >= 1);
@@ -63,34 +64,9 @@ const assert = (cond, msg) => { if (!cond) throw new Error("FAIL: " + msg); cons
     const doneAfter = await page.$$eval('.set.done', els => els.length);
     assert(doneAfter === doneBefore, `abgehakte Sätze überleben Reload (${doneAfter})`);
 
-    // ── Skip (Increment 2) ──
-    // Ringnenner vor Skip merken (Gesamt-Sätze).
-    const totalBefore = await page.evaluate(() => {
-      const m = document.querySelector("#workout-ring-label").textContent.match(/\/(\d+)/);
-      return m ? +m[1] : null;
-    });
-    // Letzte Übung aufklappen und „Heute auslassen".
-    const lastToggle = await page.$$('.ex-card .ex-toggle');
-    await lastToggle[lastToggle.length - 1].click();
-    await page.waitForSelector('.ex-skip');
-    await page.$$eval('.ex-skip', els => els[els.length - 1].click());
-    await page.waitForSelector('.ex-card.skipped');
-    assert(true, "Übung zeigt 'übersprungen'-Zustand (eigene Karte)");
-    const totalAfter = await page.evaluate(() => {
-      const m = document.querySelector("#workout-ring-label").textContent.match(/\/(\d+)/);
-      return m ? +m[1] : null;
-    });
-    assert(totalAfter < totalBefore, `übersprungene Sätze raus aus Nenner (${totalBefore} → ${totalAfter})`);
-    const skipNote = await page.textContent("#workout-tonnage");
-    assert(/übersprungen/.test(skipNote), `Statuszeile weist Skip aus: "${skipNote.trim()}"`);
-    // Skip überlebt Reload.
-    await page.goto(URL, { waitUntil: "networkidle" });
-    await page.waitForSelector("#view-workout.active");
-    assert(await page.$('.ex-card.skipped') !== null, "übersprungen überlebt Reload");
-    // Wieder aufnehmen.
-    await page.click('.ex-resume');
-    await page.waitForFunction(() => !document.querySelector('.ex-card.skipped'));
-    assert(true, "Übung wieder aufgenommen (reversibel)");
+    // Hinweis: Die frühere „Heute auslassen"-Funktion wurde mit dem
+    // Wisch-Layout entfernt (ein Button pro Übung: „Weniger Energie"). Der
+    // Skip-Abschnitt entfällt daher hier.
 
     // ── Übung hinzufügen (Increment 3) ──
     const exCountBefore = await page.$$eval('.ex-card', els => els.length);
