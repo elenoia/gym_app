@@ -452,7 +452,9 @@ h1, h2, h3 {
 .picker-option-label { font-size: 15px; font-weight: 500; }
 .picker-option-sub { font-size: 12px; color: var(--muted); }
 /* Lange Listen (Repertoire) scrollbar halten, Sheet bleibt kompakt. */
-.picker-list { max-height: 52vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* Höhe dynamisch deckeln, damit die Treffer bei offener Tastatur sichtbar
+   bleiben (--kb = Tastaturhöhe; ~230px Reserve für Titel/Suchfeld/Button). */
+.picker-list { max-height: min(52vh, calc(100dvh - var(--kb, 0px) - 230px)); overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .picker-search { width: 100%; margin: 4px 0 10px; padding: 11px 13px; background: var(--bg);
   border: 1px solid var(--line); border-radius: 12px; color: var(--text); font: inherit; font-size: 15px; outline: none; transition: border-color .15s; }
 .picker-search:focus { border-color: var(--accent); }
@@ -636,10 +638,12 @@ h1, h2, h3 {
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  /* Bottom-Sheet über die Bildschirmtastatur heben (--kb via VisualViewport). */
+  padding-bottom: var(--kb, 0px);
   background: rgba(34, 34, 59, 0);
   backdrop-filter: blur(0px);
   -webkit-backdrop-filter: blur(0px);
-  transition: background 0.22s ease, backdrop-filter 0.22s ease;
+  transition: background 0.22s ease, backdrop-filter 0.22s ease, padding-bottom 0.18s ease;
 }
 .sheet.visible {
   background: rgba(34, 34, 59, 0.55);

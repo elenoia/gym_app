@@ -2602,6 +2602,31 @@
     });
   }
 
+  // Bottom-Sheets über die Bildschirmtastatur heben (v. a. iOS), damit die
+  // Suche die Trefferliste nicht verdeckt. Tastaturhöhe = wie stark der
+  // VisualViewport gegenüber der fokusfreien Baseline schrumpft (robust gegen
+  // iOS-Toolbar-Offsets). Nur aktiv, solange ein Eingabefeld fokussiert ist.
+  (function liftSheetsAboveKeyboard() {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const root = document.documentElement;
+    let baseline = vv.height;
+    const fieldFocused = () => {
+      const a = document.activeElement;
+      return !!a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA");
+    };
+    const apply = () => {
+      if (!fieldFocused()) { baseline = vv.height; root.style.setProperty("--kb", "0px"); return; }
+      const kb = Math.max(0, Math.round(baseline - vv.height));
+      root.style.setProperty("--kb", kb + "px");
+    };
+    vv.addEventListener("resize", apply);
+    vv.addEventListener("scroll", apply);
+    document.addEventListener("focusin", apply);
+    document.addEventListener("focusout", () => root.style.setProperty("--kb", "0px"));
+    apply();
+  })();
+
   // ─── Initialisierung ─────────────────────────────────
   renderHome();
   setupEvents();
