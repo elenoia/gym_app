@@ -942,6 +942,10 @@
           </div>
           ${noteHTML(ex)}
           <div class="ex-actions">
+            ${ex.slotKey
+              ? `<button class="ex-swap" data-impro-swap="${exIdx}">${ICONS.swap} Wechseln</button>`
+              : ((meta.alternatives && meta.alternatives.length) ? `<button class="ex-swap" data-swap-ex="${exIdx}">${ICONS.swap} Tauschen</button>` : "")}
+            <button class="ex-skip" data-skip-ex="${exIdx}">${ICONS.skip} Heute auslassen</button>
             <button class="ex-energy${anyFlag(state.workout.flags) ? " on" : ""}" data-energy="${exIdx}" aria-pressed="${state.workout.flags && state.workout.flags.wenigEnergie ? "true" : "false"}">${ICONS.energy} Weniger Energie</button>
           </div>
           <button class="ex-next" data-next-from="${exIdx}">
@@ -1012,6 +1016,23 @@
         f.wenigEnergie = !f.wenigEnergie;
         applyEnergyAdjustment();
         haptic(12);
+        saveActiveSession();
+        renderWorkout();
+      });
+
+      // Übung gegen Alternative tauschen (bzw. bei Impro: Region neu wählen).
+      const swapBtn = card.querySelector(".ex-swap");
+      if (swapBtn) swapBtn.addEventListener("click", () => {
+        if (swapBtn.dataset.improSwap != null) chooseImproExercise(+swapBtn.dataset.improSwap);
+        else openSwap(+swapBtn.dataset.swapEx);
+      });
+
+      // Übung heute auslassen (session-only, reversibel) → „übersprungen"-Screen.
+      const skipBtn = card.querySelector(".ex-skip");
+      if (skipBtn) skipBtn.addEventListener("click", () => {
+        const i = +skipBtn.dataset.skipEx;
+        state.workout.exercises[i].skipped = true;
+        haptic(15);
         saveActiveSession();
         renderWorkout();
       });
@@ -1101,7 +1122,9 @@
     // erledigt = alle Sätze abgehakt (data-done).
     const countEl = $("#workout-count");
     if (countEl) {
-      const exScreens = screens.filter(s => s.classList.contains("ex-card"));
+      // Übersprungene Übungen zählen NICHT mit — eine ausgelassene Übung darf
+      // die Einheit nicht unvollständig aussehen lassen.
+      const exScreens = screens.filter(s => s.classList.contains("ex-card") && !s.classList.contains("skipped"));
       const doneEx = exScreens.filter(s => s.dataset.done === "true").length;
       countEl.innerHTML = exScreens.length
         ? `<b>${doneEx}</b> von ${exScreens.length} Übungen`

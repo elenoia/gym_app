@@ -359,15 +359,14 @@ h1, h2, h3 {
 .note-edit textarea { width: 100%; border: none; background: none; resize: none; color: var(--text); font: inherit; font-size: 13.5px; line-height: 1.5; outline: none; }
 .note-edit textarea::placeholder { color: var(--muted); }
 
-/* Übung tauschen / heute auslassen — eine Aktions-Zeile */
+/* Aktions-Zeile: Tauschen / Auslassen / Weniger Energie — dezent, einheitlich. */
 .ex-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-/* Einziger, dezenter Aktions-Button pro Übung: „Weniger Energie". Toggelt den
-   Session-Marker; aktiver Zustand (.on) gibt sich die Akzentfarbe. */
-.ex-energy { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px;
+.ex-swap, .ex-skip, .ex-energy { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px;
   background: transparent; border: 1px solid var(--line); border-radius: var(--r-xs); color: var(--dim); font: inherit; font-size: 13px; transition: color .15s, border-color .15s, background .15s; }
-.ex-energy:active { color: var(--accent); border-color: var(--accent-line); }
+.ex-swap:active, .ex-skip:active, .ex-energy:active { color: var(--accent); border-color: var(--accent-line); }
+/* „Weniger Energie" aktiv (Session-Marker an) → Akzentfläche. */
 .ex-energy.on { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft, rgba(216,157,142,.12)); }
-.ex-energy svg { flex: 0 0 auto; }
+.ex-swap svg, .ex-skip svg, .ex-energy svg { flex: 0 0 auto; }
 
 /* Dezente „Als Nächstes"-Vorschau am Fuß des Übungs-Screens. Antippbar →
    wischt zum nächsten Screen. */
