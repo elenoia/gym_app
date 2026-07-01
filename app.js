@@ -2602,28 +2602,22 @@
     });
   }
 
-  // Bottom-Sheets über die Bildschirmtastatur heben (v. a. iOS), damit die
-  // Suche die Trefferliste nicht verdeckt. Tastaturhöhe = wie stark der
-  // VisualViewport gegenüber der fokusfreien Baseline schrumpft (robust gegen
-  // iOS-Toolbar-Offsets). Nur aktiv, solange ein Eingabefeld fokussiert ist.
-  (function liftSheetsAboveKeyboard() {
+  // Bottom-Sheets an den sichtbaren Bereich (VisualViewport) binden, damit die
+  // Suche die Trefferliste nicht verdeckt, wenn die Bildschirmtastatur offen ist.
+  // Das Overlay wird exakt auf Höhe/Offset des VisualViewports gelegt (--vv-*),
+  // sodass der Kartenboden immer direkt über der Tastatur sitzt – unabhängig
+  // davon, ob iOS das Layout-Viewport mitverkleinert (standalone/PWA) oder nicht
+  // (Safari). Kein doppelter Lift mehr wie bei der früheren --kb-Lösung.
+  (function bindSheetsToVisualViewport() {
     const vv = window.visualViewport;
     if (!vv) return;
     const root = document.documentElement;
-    let baseline = vv.height;
-    const fieldFocused = () => {
-      const a = document.activeElement;
-      return !!a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA");
-    };
     const apply = () => {
-      if (!fieldFocused()) { baseline = vv.height; root.style.setProperty("--kb", "0px"); return; }
-      const kb = Math.max(0, Math.round(baseline - vv.height));
-      root.style.setProperty("--kb", kb + "px");
+      root.style.setProperty("--vv-height", Math.round(vv.height) + "px");
+      root.style.setProperty("--vv-top", Math.round(vv.offsetTop) + "px");
     };
     vv.addEventListener("resize", apply);
     vv.addEventListener("scroll", apply);
-    document.addEventListener("focusin", apply);
-    document.addEventListener("focusout", () => root.style.setProperty("--kb", "0px"));
     apply();
   })();
 
