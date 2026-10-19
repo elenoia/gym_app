@@ -1202,13 +1202,107 @@ const EXERCISES = {
         </g>
       </g>
     </svg>`
+  },
+
+  // ───── Rear Delt Row (breites Kabelrudern, sitzend) ─────
+  // Seitenansicht: Ellbogen bleiben auf Schulterhöhe und wandern weit nach hinten.
+  rear_delt_row: {
+    name: "Rear Delt Row (breites Kabelrudern)",
+    target: "Hintere Schulter, oberer Rücken",
+    notes: "Sitzend am Kabelzug, breiter Neutralgriff oder gerade Stange. Ellbogen weit außen auf Schulterhöhe, zur oberen Brust ziehen, kurz halten. Ellbogen eng am Körper = normales Rudern.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Kabelturm + Umlenkrolle auf Brusthöhe -->
+        <line x1="90" y1="14" x2="90" y2="92" stroke="#8B8298" stroke-width="1.6"/>
+        <circle cx="87" cy="42" r="2.5" stroke="#8B8298" stroke-width="1.5"/>
+        <!-- Sitz + Fußplatte -->
+        <rect x="26" y="72" width="26" height="6" rx="2" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.5"/>
+        <line x1="39" y1="78" x2="39" y2="92" stroke="#8B8298" stroke-width="1.5"/>
+        <rect x="74" y="68" width="5" height="16" rx="1.5" fill="#3A3A5C" stroke="#8B8298" stroke-width="1.2"/>
+        <!-- Kopf -->
+        <circle cx="40" cy="32" r="5" fill="#D89D8E"/>
+        <!-- Torso aufrecht -->
+        <line x1="40" y1="37" x2="40" y2="71" stroke="#F2E9E4" stroke-width="2.5"/>
+        <circle cx="40" cy="71" r="2" fill="#F2E9E4"/>
+        <!-- Beine nach vorn zur Fußplatte -->
+        <line x1="40" y1="71" x2="58" y2="64" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="58" y1="64" x2="73" y2="76" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Kabel: Rolle → Griff -->
+        <line x1="85" y1="42" x2="72" y2="43" stroke="#8B8298" stroke-width="1.2">
+          <animate attributeName="x2" values="72;47;72" dur="2.4s" repeatCount="indefinite"/>
+        </line>
+        <!-- Oberarm: Schulter → Ellbogen, bleibt auf Schulterhöhe -->
+        <line x1="40" y1="42" x2="56" y2="43" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="56;26;56" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="43;41;43" dur="2.4s" repeatCount="indefinite"/>
+        </line>
+        <!-- Unterarm: Ellbogen → Griff (zur oberen Brust) -->
+        <line x1="56" y1="43" x2="71" y2="43" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x1" values="56;26;56" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="y1" values="43;41;43" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="x2" values="71;46;71" dur="2.4s" repeatCount="indefinite"/>
+        </line>
+        <!-- Ellbogen-Marker (weit außen / hinten) -->
+        <circle cx="56" cy="43" r="2" fill="#F2E9E4">
+          <animate attributeName="cx" values="56;26;56" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="cy" values="43;41;43" dur="2.4s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Breiter Griff / Stange -->
+        <rect x="70" y="38" width="4" height="10" rx="1.5" fill="#D89D8E">
+          <animate attributeName="x" values="70;45;70" dur="2.4s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </svg>`
+  },
+
+  // ───── Kettlebell Halo ─────
+  // Frontansicht: Kettlebell (kopfüber am Horn) kreist eng um den Kopf.
+  // Hinter dem Kopf wird sie halbtransparent, damit die Umrundung lesbar ist.
+  kettlebell_halo: {
+    name: "Kettlebell Halo",
+    target: "Schultern, Rumpf",
+    notes: "Kettlebell am Horn kopfüber halten, eng um den Kopf kreisen, Rumpf fest, Rippen unten. Richtung abwechseln.",
+    svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Boden -->
+        <line x1="24" y1="94" x2="76" y2="94" stroke="#8B8298" stroke-width="1.2"/>
+        <!-- Kopf -->
+        <circle cx="50" cy="26" r="5" fill="#D89D8E"/>
+        <!-- Torso -->
+        <line x1="50" y1="31" x2="50" y2="64" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Beine -->
+        <line x1="50" y1="64" x2="43" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <line x1="50" y1="64" x2="57" y2="92" stroke="#F2E9E4" stroke-width="2.5"/>
+        <!-- Kreisbahn (dezent) -->
+        <ellipse cx="50" cy="22" rx="15" ry="5" stroke="#8B8298" stroke-width="1" stroke-dasharray="2 2.5"/>
+        <!-- Arme: Schultern → Hände am Horn (folgen der Kreisbahn) -->
+        <line x1="46" y1="36" x2="50" y2="33" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="50;60.6;65;60.6;50;39.4;35;39.4;50" dur="2.6s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="33;31.5;28;24.5;23;24.5;28;31.5;33" dur="2.6s" repeatCount="indefinite"/>
+        </line>
+        <line x1="54" y1="36" x2="50" y2="33" stroke="#F2E9E4" stroke-width="2.5">
+          <animate attributeName="x2" values="50;60.6;65;60.6;50;39.4;35;39.4;50" dur="2.6s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="33;31.5;28;24.5;23;24.5;28;31.5;33" dur="2.6s" repeatCount="indefinite"/>
+        </line>
+        <!-- Kettlebell kopfüber: Horn unten, Kugel oben -->
+        <g>
+          <animateTransform attributeName="transform" type="translate"
+            values="50 33;60.6 31.5;65 28;60.6 24.5;50 23;39.4 24.5;35 28;39.4 31.5;50 33" dur="2.6s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="1;1;1;0.4;0.4;0.4;1;1;1" dur="2.6s" repeatCount="indefinite"/>
+          <path d="M-3.5 -3 L-3.5 0 Q0 3.5 3.5 0 L3.5 -3" stroke="#D89D8E" stroke-width="2"/>
+          <circle cx="0" cy="-7.5" r="5.5" fill="#D89D8E"/>
+          <line x1="-4" y1="-3" x2="4" y2="-3" stroke="#3A3A5C" stroke-width="1.2"/>
+        </g>
+      </g>
+    </svg>`
   }
 };
 
 /**
  * Struktur-Metadaten je Übung (Punkt 4/5/6 aus dem Umbau).
  *
- *   equipment    – "Maschine" | "Kabel" | "Freihantel" | "Langhantel" | "Band" | "Körpergewicht"
+ *   equipment    – "Maschine" | "Kabel" | "Freihantel" | "Langhantel" | "Kurzhanteln" |
+ *                  "Kettlebell" | "BOSU" | "Band" | "Körpergewicht"
  *   unilateral   – true, wenn die Übung pro Seite ausgeführt wird. Steuert sowohl
  *                  die getrennte L/R-Eingabe als auch die Tonnage (einseitig zählt
  *                  pro Seite, siehe setVolume() in app.js).
@@ -1227,6 +1321,9 @@ const EXERCISES = {
  *                  invertiert, wo Progression bewertet wird (lastBest etc.), und
  *                  zählt 0 kg zur Tonnage. UI-Label: "Gegengewicht (kg)".
  *   startDuration – optionale Startdauer (Sek.) für metric:"duration".
+ *   repsPerDirection – true, wenn Wdh. pro Richtung gezählt werden (z. B. Halo:
+ *                  erst links-, dann rechtsherum). Nur Beschriftung, Tonnage
+ *                  unverändert. UI-Label: "Wdh. pro Richtung".
  *
  * Bewusst als separater Block gehalten, damit die großen SVG-Objekte oben
  * unangetastet bleiben. Die Schleife darunter merged die Felder in EXERCISES
@@ -1250,7 +1347,7 @@ const EXERCISE_META = {
   trizeps_kabel:    { equipment: "Kabel",         unilateral: false, muscles: ["Trizeps"],                        alternatives: ["liegestuetze"] },
   hip_thrust:       { equipment: "Freihantel",    unilateral: false, muscles: ["Gesäß"],                          alternatives: ["rueckenstrecker", "beinbeuger", "rdl"] },
   // Face Pulls als einseitige Kabelzug-Variante (Punkt 4).
-  face_pulls:       { equipment: "Kabel",         unilateral: true,  muscles: ["Hintere Schulter", "Trapez"],    alternatives: ["rear_delt_pull"] },
+  face_pulls:       { equipment: "Kabel",         unilateral: true,  muscles: ["Hintere Schulter", "Trapez"],    alternatives: ["rear_delt_pull", "rear_delt_row"] },
   liegestuetze:     { equipment: "Körpergewicht", unilateral: false, muscles: ["Brust", "Schultern", "Trizeps", "Core"], alternatives: ["bankdruecken", "butterfly"] },
   latzug_eng:       { equipment: "Kabel",         unilateral: false, muscles: ["Latissimus", "Bizeps"],          alternatives: ["latzug_breit", "bizeps_curls", "langhantelrudern_untergriff"] },
   rudern_maschine:  { equipment: "Maschine",      unilateral: false, muscles: ["Oberer Rücken", "Latissimus"],   alternatives: ["kabelrudern", "latzug_breit"] },
@@ -1275,11 +1372,17 @@ const EXERCISE_META = {
   // Freie Variante zum Maschinen-Schulterdrücken (Overhead Press).
   ohp_langhantel:   { equipment: "Langhantel",    unilateral: false, muscles: ["Schultern", "Trizeps"],               alternatives: ["schulterpresse", "schulterdruecken"] },
   // Kurzhantel-Ergänzung zu den Face Pulls (hintere Schulter).
-  rear_delt_pull:   { equipment: "Kurzhanteln",   unilateral: false, muscles: ["Hintere Schulter", "Oberer Rücken"],  alternatives: ["face_pulls", "reverse_fly"] },
+  rear_delt_pull:   { equipment: "Kurzhanteln",   unilateral: false, muscles: ["Hintere Schulter", "Oberer Rücken"],  alternatives: ["face_pulls", "reverse_fly", "rear_delt_row"] },
   // Vertikaler Zug als Alternative zum Latzug. INVERTIERT: getrackt = Gegengewicht (kg).
   klimmzug_unterstuetzt: { equipment: "Maschine", unilateral: false, muscles: ["Latissimus", "Oberer Rücken", "Bizeps"], alternatives: ["latzug_breit", "latzug_eng"], inverseProgression: true },
   // Zeitbasierte Core-Übung im selben Pool wie die Bauchmaschine. Haltedauer in Sek.
-  bosu_core:        { equipment: "BOSU",          unilateral: false, muscles: ["Rumpf", "Core"],                  alternatives: ["bauchmaschine", "knee_tuck_ball"], metric: "duration", startDuration: 30 }
+  bosu_core:        { equipment: "BOSU",          unilateral: false, muscles: ["Rumpf", "Core"],                  alternatives: ["bauchmaschine", "knee_tuck_ball"], metric: "duration", startDuration: 30 },
+  // Breites Kabelrudern (Ellbogen auf Schulterhöhe) — hintere Schulter primär.
+  // Impro: Slot „Schultern" (Hintere Schulter/Trapez), auch „Rücken" (Oberer Rücken/Rhomboiden).
+  rear_delt_row:    { equipment: "Kabel",         unilateral: false, muscles: ["Hintere Schulter", "Oberer Rücken", "Rhomboiden", "Trapez"], alternatives: ["face_pulls", "rear_delt_pull"] },
+  // Mobilität/Kraft über Kopf. Wdh. werden pro Richtung gezählt (repsPerDirection).
+  // Impro: Slot „Schultern", auch „Rumpf".
+  kettlebell_halo:  { equipment: "Kettlebell",    unilateral: false, muscles: ["Schultern", "Rumpf"],             alternatives: [], repsPerDirection: true }
 };
 
 // Metadaten in EXERCISES mergen, mit konservativen Defaults für evtl. fehlende IDs.
@@ -1300,6 +1403,8 @@ Object.entries(EXERCISES).forEach(([id, ex]) => {
   ex.inverseProgression = meta.inverseProgression ?? false;
   // Optionale Startdauer (Sek.) für Zeit-Übungen.
   ex.startDuration = meta.startDuration ?? null;
+  // Wdh. pro Richtung (nur Beschriftung im UI).
+  ex.repsPerDirection = meta.repsPerDirection ?? false;
   // Vorbelegte Notiz; von der Nutzerin editierbar (gespeichert pro Übung).
   // Reihenfolge: spezifische META-Notiz (z. B. Kabelrudern) → sonst der
   // Ausführungs-Tipp der Übung, damit beim Training direkt ein Hinweis steht.

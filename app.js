@@ -751,6 +751,7 @@
     const meta = EXERCISES[ex.id] || {};
     if (meta.metric === "duration") return "Haltedauer (Sek.)";
     if (meta.inverseProgression) return "Gegengewicht (kg)";
+    if (meta.repsPerDirection) return "Wdh. pro Richtung";
     return "";
   }
 
@@ -932,7 +933,7 @@
           <span class="ex-figure">${meta.svg}</span>
           <span class="ex-meta">
             <h3>${escapeHtml(meta.name)}${ex.addedInSession ? `<span class="ex-added">Zusatz heute</span>` : ""}</h3>
-            <p>${escapeHtml(meta.target)} · ${ex.metric === "duration" ? `${ex.sets.length} × Halten` : `${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}`}</p>
+            <p>${escapeHtml(meta.target)} · ${ex.metric === "duration" ? `${ex.sets.length} × Halten` : `${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}${meta.repsPerDirection ? " / Richtung" : ""}`}</p>
           </span>
           ${allDone ? `<span class="ex-done-badge">${ICONS.check} fertig</span>` : ""}
         </button>
@@ -1629,7 +1630,7 @@
 
     const ob = lastBest(ex);
     const scheme = [
-      { l: "Sätze", v: ex.metric === "duration" ? `${ex.sets.length} × Halten` : `${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}` },
+      { l: "Sätze", v: ex.metric === "duration" ? `${ex.sets.length} × Halten` : `${ex.sets.length} × ${ex.repsLow}–${ex.repsHigh}${meta.repsPerDirection ? " / Richtung" : ""}` },
       { l: "Pause", v: fmtRest(ex.rest) },
       { l: "Letztes", v: ob ? formatLastBest(ex, ob) : "–" }
     ];
@@ -1957,7 +1958,7 @@
              + field("weightR", "R kg", s.weightR, "0.5") + field("repsR", "R Wdh", s.repsR, "1");
     } else {
       fields = field("weight", ex.inverseProgression ? "Gegengew." : "kg", s.weight, "0.5")
-             + field("reps", "Wdh", s.reps, "1");
+             + field("reps", EXERCISES[ex.id]?.repsPerDirection ? "Wdh/Richt." : "Wdh", s.reps, "1");
     }
     return `<div class="editor-set">
       <span class="editor-set-n">${sIdx + 1}</span>
